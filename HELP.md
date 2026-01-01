@@ -37,6 +37,15 @@ When running `qr-network scan`:
 *   **`--camera <ID>`**: Select a specific camera (Default: 0).
 *   **`--timeout <SECONDS>`**: Set how long to wait before stopping (Default: 60s).
 
+### 🍎 Running CLI from Built App (.app)
+If you have built the application (`dist/QRNetworkScanner.app`), you cannot use the `open` command with arguments. You must run the executable directly:
+
+```bash
+# Correct way to run CLI from the .app
+./dist/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan --verbose
+```
+*(Note: You may need to grant Terminal permission to access the Camera)*
+
 **Example:**
 ```bash
 uv run qr-network scan --verbose --timeout 30

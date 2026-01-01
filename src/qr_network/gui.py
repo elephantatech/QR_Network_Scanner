@@ -112,6 +112,14 @@ class QRNetworkApp:
         help_text.insert(tk.END, "2. Go to the 'Scanner' tab and click 'Start Scanning'.\n", "step")
         help_text.insert(tk.END, "3. Point the camera at the code. The app will auto-connect.\n", "step")
 
+        help_text.insert(tk.END, "CLI Mode (Advanced)\n", "h2")
+        help_text.insert(tk.END, "Run from Source (Terminal):\n", "step")
+        help_text.insert(tk.END, "• uv run qr-network scan\n", "li")
+        
+        help_text.insert(tk.END, "Run from Built App (.app):\n", "step")
+        help_text.insert(tk.END, "• ./dist/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan\n", "li")
+        help_text.insert(tk.END, "(Do NOT use the 'open' command for CLI arguments!)\n", "li")
+
         help_text.insert(tk.END, "Frequently Asked Questions (FAQ)\n", "h2")
         
         help_text.insert(tk.END, "Q: Camera shows 'Could not open camera'\n", "q")
