@@ -70,13 +70,18 @@ This is almost always a **macOS Permission Issue**.
 *   **Lighting:** Ensure there is decent lighting on the QR code.
 *   **Focus:** If your webcam has manual focus, ensure it's sharp. The app uses `zxing-cpp` (industrial grade detection), so it tolerates angles well, but blur can be an issue.
 
-### 🟠 "Connection Failed" / "Failed to add network"
-*   **Invalid Password:** The QR code might contain an incorrect password for that network.
-*   **Weak Signal:** You might be too far from the router.
-*   **Enterprise Networks:** This app supports WPA/WPA2/WEP personal networks. Complex Enterprise (802.1x) configurations might not be fully supported via simple QR codes.
-*   **Manual Connect:** If the app adds the network but fails to switch:
-    *   Click the WiFi icon in your macOS menu bar.
-    *   Select the network manually (it should now be in your saved list).
+### � Where are the Logs?
+
+*   **Debug Log:** `~/qr_network_debug.log` (Home Directory)
+    *   *Only created if you run with* `--debug`
+    *   Contains detailed application activity.
+*   **Crash Log:** `~/qr_crash.log`
+    *   Created automatically if the application crashes unexpectedly.
+
+To view them via Terminal:
+```bash
+cat ~/qr_network_debug.log
+```
 
 ---
 
