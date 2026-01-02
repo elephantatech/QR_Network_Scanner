@@ -69,11 +69,27 @@ class QRNetworkApp:
         self.scanner = QRCodeScanner()
         self.is_scanning = False 
         self.camera_active = True
+        self.is_paused = False # New flag for focus tracking
         
         # Delay camera start to ensure UI is ready
         self.root.after(500, self.start_camera_safe)
         
         self.create_native_menu()
+        
+        # Bind Focus Events for pausing camera
+        self.root.bind("<FocusIn>", self.on_focus_in)
+        self.root.bind("<FocusOut>", self.on_focus_out)
+
+    def on_focus_in(self, event):
+        # Only handle root window focus events to avoid child widget noise
+        if event.widget == self.root:
+            self.is_paused = False
+            # self.log("App Focused - Resuming Camera")
+
+    def on_focus_out(self, event):
+        if event.widget == self.root:
+            self.is_paused = True
+            # self.log("App Lost Focus - Pausing Camera")
 
     def create_native_menu(self):
         """Create native macOS menu bar"""
@@ -88,221 +104,16 @@ class QRNetworkApp:
         app_menu.add_separator()
         
         self.root.config(menu=menubar)
-
-    def setup_scanner_ui(self):
-        # Scan Button
-        self.scan_btn = tk.Button(self.scanner_frame, text="Start Scanning", command=self.toggle_scan, 
-                                  height=2, bg="#007AFF", fg="black", font=("Arial", 14, "bold"))
-        self.scan_btn.pack(pady=20, fill=tk.X, padx=50)
-
-        # Camera Feed Label
-        self.camera_label = Label(self.scanner_frame, bg="black")
-        self.camera_label.pack(pady=5, padx=10)
         
-        # Log Area
-        log_frame = tk.LabelFrame(self.scanner_frame, text="Activity Log", bg="#f0f0f0", font=("Arial", 10, "bold"))
-        log_frame.pack(pady=10, padx=20, fill=tk.BOTH, expand=True)
-        
-        self.log_area = scrolledtext.ScrolledText(log_frame, state='disabled', height=8)
-        self.log_area.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-    def setup_help_ui(self):
-        import webbrowser
-        
-        # --- Toolbar Frame ---
-        toolbar = tk.Frame(self.help_frame, bg="white", pady=10)
-        toolbar.pack(fill=tk.X, padx=20)
-        
-        # Search Bar
-        tk.Label(toolbar, text="🔍", bg="white", font=("Arial", 14)).pack(side=tk.LEFT)
-        self.search_var = tk.StringVar()
-        entry = tk.Entry(toolbar, textvariable=self.search_var, font=("Arial", 12), width=30)
-        entry.pack(side=tk.LEFT, padx=5)
-        entry.bind("<Return>", lambda e: self.search_help())
-        
-        btn_search = tk.Button(toolbar, text="Search", command=self.search_help)
-        btn_search.pack(side=tk.LEFT, padx=5)
-
-        # External Links
-        btn_github = tk.Button(toolbar, text="🐛 Report Bug", 
-                               command=lambda: webbrowser.open("https://github.com/elephantatech/QR_Network_Scanner/issues"),
-                               bg="#ffdddd")
-        btn_github.pack(side=tk.RIGHT, padx=5)
-        
-        btn_html = tk.Button(toolbar, text="🌐 Open HTML Guide", command=self.open_html_help)
-        btn_html.pack(side=tk.RIGHT, padx=5)
-
-        btn_about = tk.Button(toolbar, text="ℹ️ About", command=self.show_about)
-        btn_about.pack(side=tk.RIGHT, padx=5)
-
-        # --- Help Text Area ---
-        self.help_text = scrolledtext.ScrolledText(self.help_frame, wrap=tk.WORD, 
-                                              font=("Segoe UI", 11), padx=20, pady=20, bd=0)
-        self.help_text.pack(fill=tk.BOTH, expand=True)
-        
-        # Configure Tags for Styling
-        self.help_text.tag_config("h1", font=("Segoe UI", 22, "bold"), foreground="#007AFF", spacing3=15)
-        self.help_text.tag_config("h2", font=("Segoe UI", 16, "bold"), foreground="#333333", spacing1=20, spacing3=10)
-        self.help_text.tag_config("q", font=("Segoe UI", 12, "bold"), foreground="#d63031", spacing1=10)
-        self.help_text.tag_config("a", font=("Segoe UI", 11), foreground="#2d3436", spacing3=15, lmargin1=20, lmargin2=20)
-        self.help_text.tag_config("step", font=("Segoe UI", 11), foreground="#2d3436", lmargin1=20, lmargin2=20)
-        self.help_text.tag_config("li", lmargin1=30, lmargin2=30)
-        self.help_text.tag_config("highlight", background="yellow", foreground="black")
-        
-        # Insert Content
-        self.help_text.insert(tk.END, "QR Network Scanner Guide\n", "h1")
-        
-        self.help_text.insert(tk.END, "How to Use\n", "h2")
-        self.help_text.insert(tk.END, "1. Have a WiFi QR code ready (e.g. from Android WiFi sharing).\n", "step")
-        self.help_text.insert(tk.END, "2. Go to the 'Scanner' tab and click 'Start Scanning'.\n", "step")
-        self.help_text.insert(tk.END, "3. Point the camera at the code. The app will auto-connect.\n", "step")
-
-        self.help_text.insert(tk.END, "CLI Mode (Advanced)\n", "h2")
-        self.help_text.insert(tk.END, "Run from Source (Terminal):\n", "step")
-        self.help_text.insert(tk.END, "• uv run qr-network scan\n", "li")
-        
-        self.help_text.insert(tk.END, "Run from Built App (.app):\n", "step")
-        self.help_text.insert(tk.END, "• ./dist/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan\n", "li")
-        self.help_text.insert(tk.END, "(Do NOT use the 'open' command for CLI arguments!)\n", "li")
-
-        self.help_text.insert(tk.END, "Frequently Asked Questions (FAQ)\n", "h2")
-        
-        self.help_text.insert(tk.END, "Q: Camera shows 'Could not open camera'\n", "q")
-        self.help_text.insert(tk.END, "A: This is a macOS permission issue.\n", "a")
-        self.help_text.insert(tk.END, "• You must click 'Allow' when prompted.\n", "li")
-        self.help_text.insert(tk.END, "• IMPORTANT: Restart the app after granting permission.\n", "li")
-        self.help_text.insert(tk.END, "• Check System Settings > Privacy > Camera.\n", "li")
-
-        self.help_text.insert(tk.END, "Q: It's scanning but not detecting?\n", "q")
-        self.help_text.insert(tk.END, "A: Move the code closer/further. Ensure good lighting. The content must be a standard WiFi QR code.\n", "a")
-        
-        self.help_text.insert(tk.END, "Q: What happens if I can't connect?\n", "q")
-        self.help_text.insert(tk.END, "A: The app adds the network to macOS Settings. You can also try clicking the WiFi icon in your menu bar to select it manually if the auto-switch fails.\n", "a")
-
-        self.help_text.config(state="disabled")
-
-    def search_help(self):
-        query = self.search_var.get().strip()
-        self.help_text.tag_remove("highlight", "1.0", tk.END)
-        
-        if not query:
-            return
-            
-        start_pos = "1.0"
-        while True:
-            # Search for keyword
-            start_pos = self.help_text.search(query, start_pos, stopindex=tk.END, nocase=True)
-            if not start_pos:
-                break
-            
-            # Highlight match
-            end_pos = f"{start_pos}+{len(query)}c"
-            self.help_text.tag_add("highlight", start_pos, end_pos)
-            start_pos = end_pos
-            
-        self.help_text.see("highlight.first") # Scroll to first match
-
-    def open_html_help(self):
-        import webbrowser
-        try:
-            path = resource_path("assets/help.html")
-            url = "file://" + path
-            webbrowser.open(url)
-        except Exception as e:
-            messagebox.showerror("Error", f"Could not open help file: {e}")
-
-    def show_about(self):
-        # Pause camera updates
-        was_active = self.camera_active
-        self.camera_active = False
-        
-        # Create Custom Window (Non-blocking Toplevel)
-        about_window = tk.Toplevel(self.root)
-        about_window.title("About")
-        about_window.geometry("400x350")
-        about_window.resizable(False, False)
-        about_window.configure(bg="white")
-        
-        # Make it modal-like (transient) but without blocking the main loop aggressively
-        about_window.transient(self.root)
-        
-        # Content
-        pad_frame = tk.Frame(about_window, bg="white", padx=20, pady=20)
-        pad_frame.pack(fill=tk.BOTH, expand=True)
-
-        tk.Label(pad_frame, text="QR Network Scanner", font=("Arial", 16, "bold"), bg="white").pack(pady=(0, 10))
-        tk.Label(pad_frame, text="v0.1.0", font=("Arial", 10), fg="#666", bg="white").pack()
-        
-        copyright_text = (
-            "Copyright © 2026\nElephanta Technologies and Design Inc\n\n"
-            "Developed by elephantatech"
-        )
-        tk.Label(pad_frame, text=copyright_text, bg="white", justify=tk.CENTER).pack(pady=20)
-        
-        license_info = "Licensed under Apache License 2.0"
-        tk.Label(pad_frame, text=license_info, bg="white", fg="#007AFF", cursor="hand2").pack()
-
-        # Close Handler
-        def close_about():
-            about_window.destroy()
-            if was_active:
-                self.camera_active = True
-                self.update_camera_feed()
-
-        tk.Button(pad_frame, text="Close", command=close_about, width=10).pack(pady=30)
-        
-        # Handle "X" button click
-        about_window.protocol("WM_DELETE_WINDOW", close_about)
-
-    def start_camera_safe(self):
-        try:
-            self.scanner.start_camera()
-            self.update_camera_feed()
-            self.log("Camera started. Ready to scan.")
-        except Exception as e:
-            self.log(f"Camera Error: {e}")
-            messagebox.showerror("Camera Error", f"Could not start camera: {e}")
-
-    def log(self, message: str):
-        try:
-            print(f"[GUI LOG] {message}") # Console debug
-        except:
-            pass
-        
-        if self.debug and self.log_file:
-            try:
-                import datetime
-                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                with open(self.log_file, "a") as f:
-                    f.write(f"[{timestamp}] {message}\n")
-            except Exception as e:
-                pass
-
-        def _log():
-            if not self.root: return
-            try:
-                self.log_area.config(state='normal')
-                self.log_area.insert(tk.END, message + "\n")
-                self.log_area.see(tk.END)
-                self.log_area.config(state='disabled')
-            except:
-                pass
-        self.root.after(0, _log)
-
-    def toggle_scan(self):
-        if self.is_scanning:
-            # Stop scanning
-            self.is_scanning = False
-            self.scan_btn.config(text="Start Scanning", bg="#007AFF")
-            self.log("Scanning stopped.")
-        else:
-            # Start scanning
-            self.is_scanning = True
-            self.scan_btn.config(text="Stop Scanning", bg="red")
-            self.log("Scanning started...")
+    # ... (rest of methods) ...
 
     def update_camera_feed(self):
         if self.camera_active:
+            # If paused (lost focus) or camera stopped, skip processing but keep loop alive
+            if self.is_paused:
+                self.root.after(200, self.update_camera_feed) # Slow poll
+                return
+
             ret, frame = self.scanner.get_frame()
             if ret:
                 # Resize the frame to fit the UI
