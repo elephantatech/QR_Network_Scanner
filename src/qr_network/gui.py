@@ -116,6 +116,9 @@ class QRNetworkApp:
         btn_html = tk.Button(toolbar, text="🌐 Open HTML Guide", command=self.open_html_help)
         btn_html.pack(side=tk.RIGHT, padx=5)
 
+        btn_about = tk.Button(toolbar, text="ℹ️ About", command=self.show_about)
+        btn_about.pack(side=tk.RIGHT, padx=5)
+
         # --- Help Text Area ---
         self.help_text = scrolledtext.ScrolledText(self.help_frame, wrap=tk.WORD, 
                                               font=("Segoe UI", 11), padx=20, pady=20, bd=0)
@@ -191,6 +194,17 @@ class QRNetworkApp:
             webbrowser.open(url)
         except Exception as e:
             messagebox.showerror("Error", f"Could not open help file: {e}")
+
+    def show_about(self):
+        about_msg = (
+            "QR Network Scanner v0.1.0\n\n"
+            "Copyright © 2026 Elephanta Technologies and Design Inc\n"
+            "Developed by elephantatech\n\n"
+            "Licensed under the Apache License, Version 2.0.\n"
+            "You may obtain a copy of the License at:\n"
+            "http://www.apache.org/licenses/LICENSE-2.0"
+        )
+        messagebox.showinfo("About QR Network Scanner", about_msg)
 
     def start_camera_safe(self):
         try:
