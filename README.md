@@ -44,7 +44,16 @@ uv run qr-network gui
 3.  The app will automatically add the network to your System Settings and connect.
 
 ### CLI Mode (Terminal)
-Perfect for power users who live in the terminal:
+Perfect for power users who live in the terminal.
+
+**Option A: Using the Installed App (No Python required)**
+If you installed `QRNetworkScanner.app` to your Applications folder:
+```bash
+/Applications/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan
+```
+*(Tip: You can alias this in your shell profile: `alias qr-scanner='/Applications/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner'`)*
+
+**Option B: Running from Source**
 ```bash
 uv run qr-network scan
 ```
