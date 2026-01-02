@@ -72,6 +72,22 @@ class QRNetworkApp:
         
         # Delay camera start to ensure UI is ready
         self.root.after(500, self.start_camera_safe)
+        
+        self.create_native_menu()
+
+    def create_native_menu(self):
+        """Create native macOS menu bar"""
+        menubar = tk.Menu(self.root)
+        
+        # 'Apple' Menu (Application Name Menu)
+        # On macOS, the first menu added is the 'Application' menu
+        app_menu = tk.Menu(menubar, name='apple')
+        menubar.add_cascade(menu=app_menu)
+        
+        app_menu.add_command(label='About QR Network Scanner', command=self.show_about)
+        app_menu.add_separator()
+        
+        self.root.config(menu=menubar)
 
     def setup_scanner_ui(self):
         # Scan Button
