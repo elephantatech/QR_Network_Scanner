@@ -212,6 +212,10 @@ class QRNetworkApp:
             messagebox.showerror("Error", f"Could not open help file: {e}")
 
     def show_about(self):
+        # Pause camera updates to prevent freeze with modal dialog
+        was_active = self.camera_active
+        self.camera_active = False
+        
         about_msg = (
             "QR Network Scanner v0.1.0\n\n"
             "Copyright © 2026 Elephanta Technologies and Design Inc\n"
@@ -221,6 +225,11 @@ class QRNetworkApp:
             "http://www.apache.org/licenses/LICENSE-2.0"
         )
         messagebox.showinfo("About QR Network Scanner", about_msg)
+        
+        # Resume if it was active
+        if was_active:
+            self.camera_active = True
+            self.update_camera_feed()
 
     def start_camera_safe(self):
         try:
