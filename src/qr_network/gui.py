@@ -76,6 +76,18 @@ class QRNetworkApp:
                        background=[('active', '#218838'), ('pressed', '#1e7e34')],
                        foreground=[('active', 'white'), ('pressed', 'white')])
 
+        # Configure Red Button Style (for Stop)
+        self.style.configure('Red.TButton', 
+                             background='#d32f2f', 
+                             foreground='white', 
+                             font=('Helvetica', 15, 'bold'),
+                             borderwidth=0,
+                             focuscolor='none',
+                             padding=[10, 10])
+        self.style.map('Red.TButton', 
+                       background=[('active', '#b71c1c'), ('pressed', '#c62828')],
+                       foreground=[('active', 'white'), ('pressed', 'white')])
+
         self.notebook = ttk.Notebook(root)
         self.notebook.pack(expand=True, fill='both')
 
@@ -127,10 +139,12 @@ class QRNetworkApp:
         app_menu.add_command(label='About QR Network Scanner', command=self.show_about)
         app_menu.add_separator()
         
-        # 'Help' Menu
-        help_menu = tk.Menu(menubar, tearoff=0, name='help')
-        menubar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="Online Documentation", command=self.open_html_help)
+        # 'Help ' Menu (Extra space to avoid macOS Search Bar injection)
+        help_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Help ", menu=help_menu)
+        help_menu.add_command(label="Online Documentation", command=lambda: webbrowser.open("https://github.com/elephantatech/QR_Network_Scanner/blob/main/HELP.md"))
+        help_menu.add_command(label="Offline Guide (HTML)", command=self.open_html_help)
+        help_menu.add_separator()
         help_menu.add_command(label="Report an Issue", command=lambda: webbrowser.open("https://github.com/elephantatech/QR_Network_Scanner/issues"))
         
         self.root.config(menu=menubar)
@@ -159,16 +173,6 @@ class QRNetworkApp:
         # --- Toolbar Frame ---
         toolbar = tk.Frame(self.help_frame, bg="white", pady=10)
         toolbar.pack(fill=tk.X, padx=20)
-        
-        # Search Bar
-        tk.Label(toolbar, text="🔍", bg="white", font=("Arial", 14)).pack(side=tk.LEFT)
-        self.search_var = tk.StringVar()
-        entry = tk.Entry(toolbar, textvariable=self.search_var, font=("Arial", 12), width=30)
-        entry.pack(side=tk.LEFT, padx=5)
-        entry.bind("<Return>", lambda e: self.search_help())
-        
-        btn_search = tk.Button(toolbar, text="Search", command=self.search_help)
-        btn_search.pack(side=tk.LEFT, padx=5)
 
         # External Links
         btn_github = tk.Button(toolbar, text="🐛 Report Bug", 
@@ -176,7 +180,11 @@ class QRNetworkApp:
                                bg="#ffdddd")
         btn_github.pack(side=tk.RIGHT, padx=5)
         
-        btn_html = tk.Button(toolbar, text="🌐 Open HTML Guide", command=self.open_html_help)
+        btn_online = tk.Button(toolbar, text="🌎 Online Docs", 
+                               command=lambda: webbrowser.open("https://github.com/elephantatech/QR_Network_Scanner/blob/main/HELP.md"))
+        btn_online.pack(side=tk.RIGHT, padx=5)
+
+        btn_html = tk.Button(toolbar, text="📄 Offline Guide", command=self.open_html_help)
         btn_html.pack(side=tk.RIGHT, padx=5)
 
         btn_about = tk.Button(toolbar, text="ℹ️ About", command=self.show_about)
@@ -227,27 +235,6 @@ class QRNetworkApp:
         self.help_text.insert(tk.END, "A: The app adds the network to macOS Settings. You can also try clicking the WiFi icon in your menu bar to select it manually if the auto-switch fails.\n", "a")
 
         self.help_text.config(state="disabled")
-
-    def search_help(self):
-        query = self.search_var.get().strip()
-        self.help_text.tag_remove("highlight", "1.0", tk.END)
-        
-        if not query:
-            return
-            
-        start_pos = "1.0"
-        while True:
-            # Search for keyword
-            start_pos = self.help_text.search(query, start_pos, stopindex=tk.END, nocase=True)
-            if not start_pos:
-                break
-            
-            # Highlight match
-            end_pos = f"{start_pos}+{len(query)}c"
-            self.help_text.tag_add("highlight", start_pos, end_pos)
-            start_pos = end_pos
-            
-        self.help_text.see("highlight.first") # Scroll to first match
 
     def open_html_help(self):
         import webbrowser
@@ -340,12 +327,12 @@ class QRNetworkApp:
         if self.is_scanning:
             # Stop scanning
             self.is_scanning = False
-            self.scan_btn.config(text="Start Scanning", bg="#007AFF")
+            self.scan_btn.config(text="Start Scanning", style='Green.TButton')
             self.log("Scanning stopped.")
         else:
             # Start scanning
             self.is_scanning = True
-            self.scan_btn.config(text="Stop Scanning", bg="red")
+            self.scan_btn.config(text="Stop Scanning", style='Red.TButton')
             self.log("Scanning started...")
 
     def update_camera_feed(self):
@@ -379,7 +366,7 @@ class QRNetworkApp:
                     if decoded_text:
                         self.log("QR Code found! Parsing...")
                         self.is_scanning = False
-                        self.scan_btn.config(text="Start Scanning", bg="#007AFF")
+                        self.scan_btn.config(text="Start Scanning", style='Green.TButton')
                         # Process immediately as we are on main thread
                         self.process_qr_data(decoded_text, NetworkManager())
 
