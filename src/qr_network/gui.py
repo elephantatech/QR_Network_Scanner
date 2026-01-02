@@ -64,6 +64,18 @@ class QRNetworkApp:
         self.style.configure('TNotebook.Tab', font=('Helvetica', 12, 'bold'), padding=[15, 8], background='#f0f0f0')
         self.style.map('TNotebook.Tab', background=[('selected', '#007AFF')], foreground=[('selected', 'white')])
 
+        # Configure Green Button Style
+        self.style.configure('Green.TButton', 
+                             background='#28a745', 
+                             foreground='white', 
+                             font=('Helvetica', 15, 'bold'),
+                             borderwidth=0,
+                             focuscolor='none',
+                             padding=[10, 10]) # Padding handles the size
+        self.style.map('Green.TButton', 
+                       background=[('active', '#218838'), ('pressed', '#1e7e34')],
+                       foreground=[('active', 'white'), ('pressed', 'white')])
+
         self.notebook = ttk.Notebook(root)
         self.notebook.pack(expand=True, fill='both')
 
@@ -125,12 +137,9 @@ class QRNetworkApp:
 
     def setup_scanner_ui(self):
         # Scan Button
-        # on macOS 'clam' theme, fg color might be ignored on ttk.Button, using tk.Button with highlightbackground for native look
-        self.scan_btn = tk.Button(self.scanner_frame, text="Start Scanning", command=self.toggle_scan, 
-                                  height=2, bg="#28a745", fg="white", 
-                                  highlightbackground="#28a745", # For macOS border
-                                  activebackground="#218838", activeforeground="white",
-                                  font=("Helvetica", 15, "bold"), bd=0, relief="flat")
+        # Using ttk.Button with custom 'Green.TButton' style for solid color support on macOS ('clam' theme)
+        self.scan_btn = ttk.Button(self.scanner_frame, text="Start Scanning", command=self.toggle_scan, 
+                                   style='Green.TButton', cursor="hand2")
         self.scan_btn.pack(pady=20, fill=tk.X, padx=50)
 
         # Camera Feed Label
