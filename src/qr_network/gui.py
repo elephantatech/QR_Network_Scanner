@@ -212,24 +212,47 @@ class QRNetworkApp:
             messagebox.showerror("Error", f"Could not open help file: {e}")
 
     def show_about(self):
-        # Pause camera updates to prevent freeze with modal dialog
+        # Pause camera updates
         was_active = self.camera_active
         self.camera_active = False
         
-        about_msg = (
-            "QR Network Scanner v0.1.0\n\n"
-            "Copyright © 2026 Elephanta Technologies and Design Inc\n"
-            "Developed by elephantatech\n\n"
-            "Licensed under the Apache License, Version 2.0.\n"
-            "You may obtain a copy of the License at:\n"
-            "http://www.apache.org/licenses/LICENSE-2.0"
-        )
-        messagebox.showinfo("About QR Network Scanner", about_msg)
+        # Create Custom Window (Non-blocking Toplevel)
+        about_window = tk.Toplevel(self.root)
+        about_window.title("About")
+        about_window.geometry("400x350")
+        about_window.resizable(False, False)
+        about_window.configure(bg="white")
         
-        # Resume if it was active
-        if was_active:
-            self.camera_active = True
-            self.update_camera_feed()
+        # Make it modal-like (transient) but without blocking the main loop aggressively
+        about_window.transient(self.root)
+        
+        # Content
+        pad_frame = tk.Frame(about_window, bg="white", padx=20, pady=20)
+        pad_frame.pack(fill=tk.BOTH, expand=True)
+
+        tk.Label(pad_frame, text="QR Network Scanner", font=("Arial", 16, "bold"), bg="white").pack(pady=(0, 10))
+        tk.Label(pad_frame, text="v0.1.0", font=("Arial", 10), fg="#666", bg="white").pack()
+        
+        copyright_text = (
+            "Copyright © 2026\nElephanta Technologies and Design Inc\n\n"
+            "Developed by elephantatech"
+        )
+        tk.Label(pad_frame, text=copyright_text, bg="white", justify=tk.CENTER).pack(pady=20)
+        
+        license_info = "Licensed under Apache License 2.0"
+        tk.Label(pad_frame, text=license_info, bg="white", fg="#007AFF", cursor="hand2").pack()
+
+        # Close Handler
+        def close_about():
+            about_window.destroy()
+            if was_active:
+                self.camera_active = True
+                self.update_camera_feed()
+
+        tk.Button(pad_frame, text="Close", command=close_about, width=10).pack(pady=30)
+        
+        # Handle "X" button click
+        about_window.protocol("WM_DELETE_WINDOW", close_about)
 
     def start_camera_safe(self):
         try:
