@@ -91,50 +91,106 @@ class QRNetworkApp:
         self.log_area.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
     def setup_help_ui(self):
-        # Scrollable Text Widget for Help
-        help_text = scrolledtext.ScrolledText(self.help_frame, wrap=tk.WORD, 
+        import webbrowser
+        
+        # --- Toolbar Frame ---
+        toolbar = tk.Frame(self.help_frame, bg="white", pady=10)
+        toolbar.pack(fill=tk.X, padx=20)
+        
+        # Search Bar
+        tk.Label(toolbar, text="🔍", bg="white", font=("Arial", 14)).pack(side=tk.LEFT)
+        self.search_var = tk.StringVar()
+        entry = tk.Entry(toolbar, textvariable=self.search_var, font=("Arial", 12), width=30)
+        entry.pack(side=tk.LEFT, padx=5)
+        entry.bind("<Return>", lambda e: self.search_help())
+        
+        btn_search = tk.Button(toolbar, text="Search", command=self.search_help)
+        btn_search.pack(side=tk.LEFT, padx=5)
+
+        # External Links
+        btn_github = tk.Button(toolbar, text="🐛 Report Bug", 
+                               command=lambda: webbrowser.open("https://github.com/elephantatech/QR_Network_Scanner/issues"),
+                               bg="#ffdddd")
+        btn_github.pack(side=tk.RIGHT, padx=5)
+        
+        btn_html = tk.Button(toolbar, text="🌐 Open HTML Guide", command=self.open_html_help)
+        btn_html.pack(side=tk.RIGHT, padx=5)
+
+        # --- Help Text Area ---
+        self.help_text = scrolledtext.ScrolledText(self.help_frame, wrap=tk.WORD, 
                                               font=("Segoe UI", 11), padx=20, pady=20, bd=0)
-        help_text.pack(fill=tk.BOTH, expand=True)
+        self.help_text.pack(fill=tk.BOTH, expand=True)
         
         # Configure Tags for Styling
-        help_text.tag_config("h1", font=("Segoe UI", 22, "bold"), foreground="#007AFF", spacing3=15)
-        help_text.tag_config("h2", font=("Segoe UI", 16, "bold"), foreground="#333333", spacing1=20, spacing3=10)
-        help_text.tag_config("q", font=("Segoe UI", 12, "bold"), foreground="#d63031", spacing1=10)
-        help_text.tag_config("a", font=("Segoe UI", 11), foreground="#2d3436", spacing3=15, lmargin1=20, lmargin2=20)
-        help_text.tag_config("step", font=("Segoe UI", 11), foreground="#2d3436", lmargin1=20, lmargin2=20)
-        help_text.tag_config("li", lmargin1=30, lmargin2=30)
+        self.help_text.tag_config("h1", font=("Segoe UI", 22, "bold"), foreground="#007AFF", spacing3=15)
+        self.help_text.tag_config("h2", font=("Segoe UI", 16, "bold"), foreground="#333333", spacing1=20, spacing3=10)
+        self.help_text.tag_config("q", font=("Segoe UI", 12, "bold"), foreground="#d63031", spacing1=10)
+        self.help_text.tag_config("a", font=("Segoe UI", 11), foreground="#2d3436", spacing3=15, lmargin1=20, lmargin2=20)
+        self.help_text.tag_config("step", font=("Segoe UI", 11), foreground="#2d3436", lmargin1=20, lmargin2=20)
+        self.help_text.tag_config("li", lmargin1=30, lmargin2=30)
+        self.help_text.tag_config("highlight", background="yellow", foreground="black")
         
         # Insert Content
-        help_text.insert(tk.END, "QR Network Scanner Guide\n", "h1")
+        self.help_text.insert(tk.END, "QR Network Scanner Guide\n", "h1")
         
-        help_text.insert(tk.END, "How to Use\n", "h2")
-        help_text.insert(tk.END, "1. Have a WiFi QR code ready (e.g. from Android WiFi sharing).\n", "step")
-        help_text.insert(tk.END, "2. Go to the 'Scanner' tab and click 'Start Scanning'.\n", "step")
-        help_text.insert(tk.END, "3. Point the camera at the code. The app will auto-connect.\n", "step")
+        self.help_text.insert(tk.END, "How to Use\n", "h2")
+        self.help_text.insert(tk.END, "1. Have a WiFi QR code ready (e.g. from Android WiFi sharing).\n", "step")
+        self.help_text.insert(tk.END, "2. Go to the 'Scanner' tab and click 'Start Scanning'.\n", "step")
+        self.help_text.insert(tk.END, "3. Point the camera at the code. The app will auto-connect.\n", "step")
 
-        help_text.insert(tk.END, "CLI Mode (Advanced)\n", "h2")
-        help_text.insert(tk.END, "Run from Source (Terminal):\n", "step")
-        help_text.insert(tk.END, "• uv run qr-network scan\n", "li")
+        self.help_text.insert(tk.END, "CLI Mode (Advanced)\n", "h2")
+        self.help_text.insert(tk.END, "Run from Source (Terminal):\n", "step")
+        self.help_text.insert(tk.END, "• uv run qr-network scan\n", "li")
         
-        help_text.insert(tk.END, "Run from Built App (.app):\n", "step")
-        help_text.insert(tk.END, "• ./dist/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan\n", "li")
-        help_text.insert(tk.END, "(Do NOT use the 'open' command for CLI arguments!)\n", "li")
+        self.help_text.insert(tk.END, "Run from Built App (.app):\n", "step")
+        self.help_text.insert(tk.END, "• ./dist/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan\n", "li")
+        self.help_text.insert(tk.END, "(Do NOT use the 'open' command for CLI arguments!)\n", "li")
 
-        help_text.insert(tk.END, "Frequently Asked Questions (FAQ)\n", "h2")
+        self.help_text.insert(tk.END, "Frequently Asked Questions (FAQ)\n", "h2")
         
-        help_text.insert(tk.END, "Q: Camera shows 'Could not open camera'\n", "q")
-        help_text.insert(tk.END, "A: This is a macOS permission issue.\n", "a")
-        help_text.insert(tk.END, "• You must click 'Allow' when prompted.\n", "li")
-        help_text.insert(tk.END, "• IMPORTANT: Restart the app after granting permission.\n", "li")
-        help_text.insert(tk.END, "• Check System Settings > Privacy > Camera.\n", "li")
+        self.help_text.insert(tk.END, "Q: Camera shows 'Could not open camera'\n", "q")
+        self.help_text.insert(tk.END, "A: This is a macOS permission issue.\n", "a")
+        self.help_text.insert(tk.END, "• You must click 'Allow' when prompted.\n", "li")
+        self.help_text.insert(tk.END, "• IMPORTANT: Restart the app after granting permission.\n", "li")
+        self.help_text.insert(tk.END, "• Check System Settings > Privacy > Camera.\n", "li")
 
-        help_text.insert(tk.END, "Q: It's scanning but not detecting?\n", "q")
-        help_text.insert(tk.END, "A: Move the code closer/further. Ensure good lighting. The content must be a standard WiFi QR code.\n", "a")
+        self.help_text.insert(tk.END, "Q: It's scanning but not detecting?\n", "q")
+        self.help_text.insert(tk.END, "A: Move the code closer/further. Ensure good lighting. The content must be a standard WiFi QR code.\n", "a")
         
-        help_text.insert(tk.END, "Q: What happens if I can't connect?\n", "q")
-        help_text.insert(tk.END, "A: The app adds the network to macOS Settings. You can also try clicking the WiFi icon in your menu bar to select it manually if the auto-switch fails.\n", "a")
+        self.help_text.insert(tk.END, "Q: What happens if I can't connect?\n", "q")
+        self.help_text.insert(tk.END, "A: The app adds the network to macOS Settings. You can also try clicking the WiFi icon in your menu bar to select it manually if the auto-switch fails.\n", "a")
 
-        help_text.config(state="disabled")
+        self.help_text.config(state="disabled")
+
+    def search_help(self):
+        query = self.search_var.get().strip()
+        self.help_text.tag_remove("highlight", "1.0", tk.END)
+        
+        if not query:
+            return
+            
+        start_pos = "1.0"
+        while True:
+            # Search for keyword
+            start_pos = self.help_text.search(query, start_pos, stopindex=tk.END, nocase=True)
+            if not start_pos:
+                break
+            
+            # Highlight match
+            end_pos = f"{start_pos}+{len(query)}c"
+            self.help_text.tag_add("highlight", start_pos, end_pos)
+            start_pos = end_pos
+            
+        self.help_text.see("highlight.first") # Scroll to first match
+
+    def open_html_help(self):
+        import webbrowser
+        try:
+            path = resource_path("assets/help.html")
+            url = "file://" + path
+            webbrowser.open(url)
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not open help file: {e}")
 
     def start_camera_safe(self):
         try:

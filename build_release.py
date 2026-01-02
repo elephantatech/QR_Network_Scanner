@@ -20,6 +20,7 @@ def build():
         '--windowed', # Create a .app bundle
         '--icon=assets/icon.png', # App Icon
         '--add-data=assets/icon.png:assets', # Include in bundle
+        '--add-data=assets/help.html:assets', # Include HTML help
         '--clean',
         '--noconfirm',
         '--noconfirm',
