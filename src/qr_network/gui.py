@@ -250,7 +250,7 @@ class QRNetworkApp:
         tk.Label(pad_frame, text="v0.1.0", font=("Arial", 10), fg="#666", bg="white").pack()
         
         copyright_text = (
-            "Copyright © 2026\\nElephanta Technologies and Design Inc\\n\\n"
+            "Copyright © 2026\nElephanta Technologies and Design Inc\n\n"
             "Developed by elephantatech"
         )
         tk.Label(pad_frame, text=copyright_text, bg="white", justify=tk.CENTER).pack(pady=20)
@@ -269,6 +269,53 @@ class QRNetworkApp:
         
         # Handle "X" button click
         about_window.protocol("WM_DELETE_WINDOW", close_about)
+
+    def start_camera_safe(self):
+        try:
+            self.scanner.start_camera()
+            self.update_camera_feed()
+            self.log("Camera started. Ready to scan.")
+        except Exception as e:
+            self.log(f"Camera Error: {e}")
+            messagebox.showerror("Camera Error", f"Could not start camera: {e}")
+
+    def log(self, message: str):
+        try:
+            print(f"[GUI LOG] {message}") # Console debug
+        except:
+            pass
+        
+        if self.debug and self.log_file:
+            try:
+                import datetime
+                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                with open(self.log_file, "a") as f:
+                    f.write(f"[{timestamp}] {message}\n")
+            except Exception as e:
+                pass
+
+        def _log():
+            if not self.root: return
+            try:
+                self.log_area.config(state='normal')
+                self.log_area.insert(tk.END, message + "\n")
+                self.log_area.see(tk.END)
+                self.log_area.config(state='disabled')
+            except:
+                pass
+        self.root.after(0, _log)
+
+    def toggle_scan(self):
+        if self.is_scanning:
+            # Stop scanning
+            self.is_scanning = False
+            self.scan_btn.config(text="Start Scanning", bg="#007AFF")
+            self.log("Scanning stopped.")
+        else:
+            # Start scanning
+            self.is_scanning = True
+            self.scan_btn.config(text="Stop Scanning", bg="red")
+            self.log("Scanning started...")
 
     def update_camera_feed(self):
         if self.camera_active:
