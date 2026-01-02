@@ -1,4 +1,5 @@
 import tkinter as tk
+import webbrowser
 from tkinter import scrolledtext, messagebox, Label
 import tkinter.ttk as ttk
 import threading
@@ -49,9 +50,20 @@ class QRNetworkApp:
             print(f"Warning: Could not load icon: {e}")
 
         # --- Tabs Layout ---
+        # --- Theme & Styles ---
         self.style = ttk.Style()
-        self.style.configure('TNotebook.Tab', font=('Helvetica', 12, 'bold'), padding=[10, 5])
-        
+        try:
+            self.style.theme_use('clam') # Use 'clam' for better color customization support
+        except:
+            pass
+            
+        # Configure Colors & Fonts (Material-like)
+        self.style.configure('.', background='white', font=('Helvetica', 12))
+        self.style.configure('TFrame', background='white')
+        self.style.configure('TNotebook', background='white', tabposition='n')
+        self.style.configure('TNotebook.Tab', font=('Helvetica', 12, 'bold'), padding=[15, 8], background='#f0f0f0')
+        self.style.map('TNotebook.Tab', background=[('selected', '#007AFF')], foreground=[('selected', 'white')])
+
         self.notebook = ttk.Notebook(root)
         self.notebook.pack(expand=True, fill='both')
 
@@ -103,12 +115,22 @@ class QRNetworkApp:
         app_menu.add_command(label='About QR Network Scanner', command=self.show_about)
         app_menu.add_separator()
         
+        # 'Help' Menu
+        help_menu = tk.Menu(menubar, tearoff=0, name='help')
+        menubar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="Online Documentation", command=self.open_html_help)
+        help_menu.add_command(label="Report an Issue", command=lambda: webbrowser.open("https://github.com/elephantatech/QR_Network_Scanner/issues"))
+        
         self.root.config(menu=menubar)
 
     def setup_scanner_ui(self):
         # Scan Button
+        # on macOS 'clam' theme, fg color might be ignored on ttk.Button, using tk.Button with highlightbackground for native look
         self.scan_btn = tk.Button(self.scanner_frame, text="Start Scanning", command=self.toggle_scan, 
-                                  height=2, bg="#007AFF", fg="black", font=("Arial", 14, "bold"))
+                                  height=2, bg="#28a745", fg="white", 
+                                  highlightbackground="#28a745", # For macOS border
+                                  activebackground="#218838", activeforeground="white",
+                                  font=("Helvetica", 15, "bold"), bd=0, relief="flat")
         self.scan_btn.pack(pady=20, fill=tk.X, padx=50)
 
         # Camera Feed Label
