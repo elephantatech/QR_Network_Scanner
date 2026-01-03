@@ -5,6 +5,17 @@ All notable changes to the **QR Network Scanner** project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-beta.6] - 2026-01-03
+
+### Added
+- **Scan from Screen:** New feature to scan WiFi QR codes directly from the screen(s) without using the camera.
+- **CLI Support:** Added `--screen` flag to the `scan` command for screen scanning logic.
+
+### Changed
+- **GUI Layout:** Reorganized scan buttons side-by-side with icons for better usability.
+- **Camera Logic:** Disabled camera auto-start; camera only activates when explicitly requested.
+- **Preview:** Improved camera preview resizing and added a placeholder state when the camera is off.
+
 ## [0.1.0-beta.5] - 2026-01-02
 
 ### Changed

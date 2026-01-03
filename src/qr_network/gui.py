@@ -104,11 +104,11 @@ class QRNetworkApp:
         
         self.scanner = QRCodeScanner()
         self.is_scanning = False 
-        self.camera_active = True
+        self.camera_active = False # Start with camera off
         self.is_paused = False # New flag for focus tracking
         
-        # Delay camera start to ensure UI is ready
-        self.root.after(500, self.start_camera_safe)
+        # Delay camera start to ensure UI is ready (Disabled auto-start)
+        # self.root.after(500, self.start_camera_safe)
         
         self.create_native_menu()
         
@@ -152,13 +152,23 @@ class QRNetworkApp:
     def setup_scanner_ui(self):
         # Scan Button
         # Using ttk.Button with custom 'Green.TButton' style for solid color support on macOS ('clam' theme)
-        self.scan_btn = ttk.Button(self.scanner_frame, text="Start Scanning", command=self.toggle_scan, 
+        # Buttons Frame
+        btn_frame = tk.Frame(self.scanner_frame, bg="#f0f0f0")
+        btn_frame.pack(pady=20, fill=tk.X, padx=50)
+
+        # Camera Scan Button
+        self.scan_btn = ttk.Button(btn_frame, text="📷 Scan Camera", command=self.toggle_scan, 
                                    style='Green.TButton', cursor="hand2")
-        self.scan_btn.pack(pady=20, fill=tk.X, padx=50)
+        self.scan_btn.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 5))
+
+        # Screen Scan Button
+        self.screen_scan_btn = ttk.Button(btn_frame, text="🖥️ Scan Screen", command=self.scan_from_screen,
+                                          style='Green.TButton', cursor="hand2")
+        self.screen_scan_btn.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(5, 0))
 
         # Camera Feed Label
-        self.camera_label = Label(self.scanner_frame, bg="black")
-        self.camera_label.pack(pady=5, padx=10)
+        self.camera_label = Label(self.scanner_frame, bg="black", text="Camera is Off\nClick 'Scan Camera' to start", fg="white")
+        self.camera_label.pack(pady=5, padx=10, expand=True, fill=tk.BOTH)
         
         # Log Area
         log_frame = tk.LabelFrame(self.scanner_frame, text="Activity Log", bg="#f0f0f0", font=("Arial", 10, "bold"))
@@ -265,7 +275,7 @@ class QRNetworkApp:
         pad_frame.pack(fill=tk.BOTH, expand=True)
 
         tk.Label(pad_frame, text="QR Network Scanner", font=("Arial", 16, "bold"), bg="white").pack(pady=(0, 10))
-        tk.Label(pad_frame, text="v0.1.0-beta.5", font=("Arial", 10), fg="#666", bg="white").pack()
+        tk.Label(pad_frame, text="v0.1.0-beta.6", font=("Arial", 10), fg="#666", bg="white").pack()
         
         copyright_text = (
             "Copyright © 2026\nElephanta Technologies and Design Inc\n\n"
@@ -291,6 +301,7 @@ class QRNetworkApp:
     def start_camera_safe(self):
         try:
             self.scanner.start_camera()
+            self.camera_active = True
             self.update_camera_feed()
             self.log("Camera started. Ready to scan.")
         except Exception as e:
@@ -323,16 +334,57 @@ class QRNetworkApp:
                 pass
         self.root.after(0, _log)
 
+    def scan_from_screen(self):
+        """Captures screen and scans for QR code"""
+        # Stop camera scanning if active to prevent conflict/confusion
+        if self.is_scanning:
+            self.toggle_scan()
+            
+        # Temporarily stop camera feed to save resources/prevent interference while grabbing screen?
+        # For now, we can leave the feed running but just pause detection logic which is already handled since is_scanning is False.
+        # Actually, let's just log what we are doing.
+        self.log("Capturing screen...")
+        
+        # Run in thread to not freeze UI during grab/process? 
+        # Screen grab is usually fast, but detection might take a split second. 
+        # For responsiveness, main thread is usually okay for single shot, but threading is safer.
+        # However, Tkinter needs UI updates on main thread. Let's do simple blocking for now as it's a button click.
+        
+        try:
+            decoded_text = self.scanner.scan_screen()
+            
+            if decoded_text:
+                self.log("QR Code found on screen!")
+                self.process_qr_data(decoded_text, NetworkManager())
+            else:
+                self.log("No Wi-Fi QR code found on any screen.")
+                messagebox.showinfo("Scan from Screen", "No Wi-Fi QR code detected on any connected screen.\n\nMake sure the QR code is clearly visible.")
+                
+        except Exception as e:
+            self.log(f"Screen scan failed: {e}")
+            messagebox.showerror("Error", f"Could not scan screen: {e}")
+
     def toggle_scan(self):
         if self.is_scanning:
             # Stop scanning
             self.is_scanning = False
-            self.scan_btn.config(text="Start Scanning", style='Green.TButton')
+            self.scan_btn.config(text="📷 Scan Camera", style='Green.TButton')
             self.log("Scanning stopped.")
+            
+            # Stop camera to save resources
+            self.camera_active = False
+            self.scanner.stop_camera()
+            
+            # Reset Label
+            self.camera_label.config(image='', text="Camera is Off\nClick 'Scan Camera' to start")
         else:
             # Start scanning
+            if not self.camera_active:
+                 self.start_camera_safe()
+                 # self.camera_active = True # Moved to start_camera_safe
+                 
             self.is_scanning = True
-            self.scan_btn.config(text="Stop Scanning", style='Red.TButton')
+            self.scan_btn.config(text="🛑 Stop Scanning", style='Red.TButton')
             self.log("Scanning started...")
 
     def update_camera_feed(self):
@@ -344,10 +396,31 @@ class QRNetworkApp:
 
             ret, frame = self.scanner.get_frame()
             if ret:
-                # Resize the frame to fit the UI
-                height, width, _ = frame.shape
-                new_width = 640
-                new_height = int(height * (new_width / width))
+                # Resize the frame to fit the UI (Dynamic resizing)
+                # Get current label size
+                label_w = self.camera_label.winfo_width()
+                label_h = self.camera_label.winfo_height()
+                
+                # If label size is too small (e.g. minimized or initializing), use default 640x480 ratio target
+                if label_w < 10 or label_h < 10:
+                    label_w = 640
+                    label_h = 480
+                    
+                # Calculate aspect ratio
+                h, w, _ = frame.shape
+                aspect_ratio = w / h
+                
+                # Determine new dimensions to fit within label while maintaining aspect ratio
+                if label_w / label_h > aspect_ratio:
+                    # Label is wider than frame -> height is limiting factor
+                    new_height = label_h
+                    new_width = int(new_height * aspect_ratio)
+                else:
+                    # Label is taller than frame -> width is limiting factor
+                    new_width = label_w
+                    new_height = int(new_width / aspect_ratio)
+                
+                # Resize
                 resize_frame = cv2.resize(frame, (new_width, new_height))
                 
                 # Convert frame for Tkinter
@@ -355,7 +428,7 @@ class QRNetworkApp:
                 img = Image.fromarray(rgb_frame)
                 imgtk = ImageTk.PhotoImage(image=img)
                 self.camera_label.imgtk = imgtk
-                self.camera_label.configure(image=imgtk)
+                self.camera_label.configure(image=imgtk, text="") # interactively clear text
                 
                 # Perform Detection if scanning (on main thread)
                 if self.is_scanning:
@@ -366,10 +439,14 @@ class QRNetworkApp:
                     if decoded_text:
                         self.log("QR Code found! Parsing...")
                         self.is_scanning = False
-                        self.scan_btn.config(text="Start Scanning", style='Green.TButton')
+                        self.scan_btn.config(text="📷 Scan Camera", style='Green.TButton')
+                        
+                        # Stop camera to save resources
+                        self.camera_active = False
+                        self.scanner.stop_camera()
+                        
                         # Process immediately as we are on main thread
                         self.process_qr_data(decoded_text, NetworkManager())
-
             
             # Continue updating feed
             self.root.after(10, self.update_camera_feed)

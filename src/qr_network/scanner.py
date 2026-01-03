@@ -102,3 +102,34 @@ class QRCodeScanner:
             self.stop_camera()
             
         return None
+    def scan_screen(self, screen_index: Optional[int] = None) -> Optional[str]:
+        """
+        Captures screen content and detects QR code.
+        If screen_index is None, captures all screens (combined).
+        """
+        try:
+            from PIL import ImageGrab
+            import numpy as np
+            
+            # Capture screen
+            # all_screens=True is a specialized argument depending on backend.
+            # On macOS, ImageGrab.grab() usually captures the main screen or a combined one.
+            # We will try to grab all if possible, or just default grab.
+            try:
+                # Attempt to capture all screens if supported by PIL version/OS
+                screenshot = ImageGrab.grab(all_screens=True)
+            except Exception:
+                screenshot = ImageGrab.grab()
+            
+            # Convert to OpenCV format (BGR)
+            # PIL is RGB, OpenCV is BGR
+            img_np = np.array(screenshot)
+            frame = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+            
+            # Detect
+            decoded_text, _ = self.detect_qr(frame)
+            return decoded_text
+
+        except Exception as e:
+            print(f"Screen scan error: {e}")
+            return None

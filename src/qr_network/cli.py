@@ -27,7 +27,8 @@ def gui(
 def scan(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose logging"),
     camera_id: int = typer.Option(0, "--camera", "-c", help="Camera ID to use"),
-    timeout: float = typer.Option(60.0, "--timeout", "-t", help="Scan timeout in seconds")
+    timeout: float = typer.Option(60.0, "--timeout", "-t", help="Scan timeout in seconds"),
+    screen: bool = typer.Option(False, "--screen", "-s", help="Scan from screen instead of camera")
 ):
     """
     Scans a WiFi QR code and connects to the network.
@@ -40,8 +41,17 @@ def scan(
     console.print(Panel.fit("QR Network Scanner", style="bold blue"))
     
     # 2. Scan QR
-    with console.status("[bold green]Scanning for WiFi QR Code... (Point camera at QR code)[/bold green]", spinner="dots"): 
-        qr_data = scanner.scan_one(timeout=timeout)
+    qr_data = None
+    
+    if screen:
+        with console.status("[bold green]Scanning screen(s) for WiFi QR Code...[/bold green]", spinner="dots"):
+             qr_data = scanner.scan_screen()
+             if not qr_data:
+                 console.print("[bold red]No QR code found on any screen.[/bold red]")
+                 raise typer.Exit(code=1)
+    else:
+        with console.status("[bold green]Scanning for WiFi QR Code... (Point camera at QR code)[/bold green]", spinner="dots"): 
+            qr_data = scanner.scan_one(timeout=timeout)
     
     if not qr_data:
         console.print("[bold red]Scan timed out or cancelled. Exiting.[/bold red]")
