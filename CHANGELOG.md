@@ -5,6 +5,12 @@ All notable changes to the **QR Network Scanner** project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-beta.8] - 2026-01-04
+
+### Added
+- **Code Quality:** Integrated `ruff` for automated linting and `pytest-cov` for code coverage reporting in the CI pipeline.
+- **Documentation:** Added GitHub Actions build status badge to `README.md`.
+
 ## [0.1.0-beta.7] - 2026-01-04
 
 ### Fixed

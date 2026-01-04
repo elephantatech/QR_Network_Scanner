@@ -1,5 +1,7 @@
 # QR Network Scanner 📶
 
+[![CI/CD](https://github.com/elephantatech/QR_Network_Scanner/actions/workflows/build.yml/badge.svg)](https://github.com/elephantatech/QR_Network_Scanner/actions/workflows/build.yml)
+
 ![Beta](https://img.shields.io/badge/status-Beta-orange) ![macOS](https://img.shields.io/badge/platform-macOS-lightgrey) ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
 
 A native macOS utility to scan WiFi QR codes (from Android/iOS sharing) and automatically connect your Mac to the network. No more typing long, complex passwords!
