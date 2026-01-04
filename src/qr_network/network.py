@@ -10,33 +10,43 @@ class WiFiQRParser:
         """
         Parses a WIFI QR code string.
         Format: WIFI:S:MySSID;T:WPA;P:MyPassword;;
+        Supports escaping (\;, \,, \\) and case-insensitive keys.
         """
-        if not qr_string.startswith("WIFI:"):
+        if not qr_string.upper().startswith("WIFI:"):
             raise ValueError("Invalid WiFi QR code format")
 
+        # Remove prefix
+        content = qr_string[5:]
         data = {}
-        # Simple regex based parsing
-        # Matches key:value; where value can be anything except ; (basic impl)
-        # Note: Escape characters exist in standard but basic impl for now.
 
-        # SSID
-        ssid_match = re.search(r"S:([^;]+);", qr_string)
-        if ssid_match:
-            data["ssid"] = ssid_match.group(1)
+        # Regex to match Key:Value; where Value handles escaping
+        # Keys are single characters (S, T, P, H) usually, but we match ^[A-Z]:
+        # Values consume until an unescaped ;
+        # We search iteratively
 
-        # Type (WPA, WEP, nopass)
-        type_match = re.search(r"T:([^;]+);", qr_string)
-        data["type"] = type_match.group(1) if type_match else "nopass"
+        # Pattern explanation:
+        # ([A-Za-z]+):       Capture Key (case insensitive)
+        # ((?:[^;\\]|\\.)*)  Capture Value: anything not ; or \, OR an escaped char
+        # ;                  End with semicolon
+        pattern = re.compile(r"([A-Za-z]+):((?:[^;\\]|\\.)*);")
 
-        # Password
-        pass_match = re.search(r"P:([^;]+);", qr_string)
-        data["password"] = pass_match.group(1) if pass_match else ""
+        for match in pattern.finditer(content):
+            key = match.group(1).upper()
+            raw_value = match.group(2)
 
-        # Hidden
-        hidden_match = re.search(r"H:([^;]+);", qr_string)
-        data["hidden"] = (
-            hidden_match.group(1).lower() == "true" if hidden_match else False
-        )
+            # Unescape special characters
+            # The spec says: special characters backslash, semicolon, comma and colon should be escaped
+            # simple unescape: replace \(char) with char
+            value = re.sub(r"\\(.)", r"\1", raw_value)
+
+            if key == "S":
+                data["ssid"] = value
+            elif key == "T":
+                data["type"] = value
+            elif key == "P":
+                data["password"] = value
+            elif key == "H":
+                data["hidden"] = value.lower() == "true"
 
         if "ssid" not in data:
             raise ValueError("No SSID found in QR code")

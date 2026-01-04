@@ -222,18 +222,53 @@ class QRNetworkApp:
         )
         self.screen_scan_btn.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(5, 0))
 
-        # Security Options Frame
-        opt_frame = tk.Frame(self.scanner_frame, bg="#f0f0f0")
+        # Scan Options Frame (Renamed from Security Options which was implicit)
+        opt_frame = tk.LabelFrame(self.scanner_frame, text="Scan Options", bg="#f0f0f0")
         opt_frame.pack(pady=(5, 10), padx=50, fill=tk.X)
+
+        # Row 1: Camera & Timeout
+        row1 = tk.Frame(opt_frame, bg="#f0f0f0")
+        row1.pack(fill=tk.X, padx=10, pady=5)
+
+        tk.Label(row1, text="Camera:", bg="#f0f0f0").pack(side=tk.LEFT)
+
+        # Fetch actual camera names if possible (macOS)
+        from .utils import get_camera_names
+
+        camera_names = get_camera_names()
+
+        self.camera_idx_var = tk.StringVar(value=camera_names[0])
+
+        cam_combo = ttk.Combobox(
+            row1,
+            textvariable=self.camera_idx_var,
+            values=camera_names,
+            state="readonly",
+            width=20,
+        )
+        cam_combo.pack(side=tk.LEFT, padx=(5, 15))
+        # Keep map of name -> index
+        self.camera_map = {name: i for i, name in enumerate(camera_names)}
+
+        tk.Label(row1, text="Timeout (s):", bg="#f0f0f0").pack(side=tk.LEFT)
+        self.timeout_var = tk.IntVar(value=60)
+        timeout_spin = tk.Spinbox(
+            row1, from_=5, to=300, textvariable=self.timeout_var, width=4
+        )
+        timeout_spin.pack(side=tk.LEFT, padx=(5, 0))
+
+        # Row 2: Checkboxes
+        row2 = tk.Frame(opt_frame, bg="#f0f0f0")
+        row2.pack(fill=tk.X, padx=10, pady=5)
 
         # Checkboxes
         chk_confirm = ttk.Checkbutton(
-            opt_frame, text="Confirm before connecting", variable=self.confirm_connect
+            row2, text="Confirm before connecting", variable=self.confirm_connect
         )
         chk_confirm.pack(side=tk.LEFT, padx=(0, 10))
 
         chk_add = ttk.Checkbutton(
-            opt_frame, text="Add only (don't connect)", variable=self.add_only
+            row2, text="Add only (don't connect)", variable=self.add_only
         )
         chk_add.pack(side=tk.LEFT)
 
@@ -476,7 +511,7 @@ class QRNetworkApp:
             pad_frame, text="QR Network Scanner", font=("Arial", 16, "bold"), bg="white"
         ).pack(pady=(0, 10))
         tk.Label(
-            pad_frame, text="v0.1.0-beta.15", font=("Arial", 10), fg="#666", bg="white"
+            pad_frame, text="v0.1.0-beta.16", font=("Arial", 10), fg="#666", bg="white"
         ).pack()
 
         copyright_text = (
@@ -506,6 +541,15 @@ class QRNetworkApp:
 
     def start_camera_safe(self):
         try:
+            # Get index from name
+            selected_name = self.camera_idx_var.get()
+            idx = self.camera_map.get(selected_name, 0)
+
+            # If changed/first time
+            if self.scanner.camera_id != idx:
+                self.scanner.stop_camera()  # Stop old
+                self.scanner = QRCodeScanner(camera_id=idx)
+
             self.scanner.start_camera()
             self.camera_active = True
             self.update_camera_feed()
@@ -800,15 +844,20 @@ class QRNetworkApp:
                     # Timeout Check
                     try:
                         elapsed = time.time() - self.scan_start_time
-                        remaining = int(60 - elapsed)
-                        if remaining <= 0:
-                            self.toggle_scan()
-                            self.log("Scan timed out.")
+                        current_timeout = self.timeout_var.get()
+                        if elapsed > current_timeout:
+                            self.toggle_scan()  # Assuming this is the equivalent of stop_scan() for now
+                            self.log(f"Scan timed out after {current_timeout}s.")
+                            # The original code had a messagebox.askretrycancel here.
+                            # The new snippet implies a different error handling.
+                            # For now, I'll keep the original messagebox logic but adapt the message.
                             if messagebox.askretrycancel(
-                                "Scan Timed Out", "No QR code detected.\n\nRetry?"
+                                "Scan Timed Out",
+                                f"No QR code detected within {current_timeout} seconds.\n\nRetry?",
                             ):
                                 self.toggle_scan()
                             return
+                        remaining = int(current_timeout - elapsed)
                         # Overlay
                         cv2.putText(
                             resize_frame,
