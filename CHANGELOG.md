@@ -5,6 +5,19 @@ All notable changes to the **QR Network Scanner** project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-beta.13] - 2026-01-04
+
+### Documentation & Branding
+
+- **Comprehensive Help:** Updated in-app and offline help to detailedly explain all CLI options and UI features.
+- **Icon Branding:** Added the application icon to the About and Permission dialogs for consistent branding across the app.
+
+## [0.1.0-beta.12] - 2026-01-04
+
+### Documentation
+
+- **Help Update:** Updated in-app, offline, and markdown help to reference the compiled `.app` command for CLI usage instead of `uv run`.
+
 ## [0.1.0-beta.11] - 2026-01-04
 
 ### Security

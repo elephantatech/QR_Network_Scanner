@@ -53,9 +53,11 @@ Launch the visual scanner:
 uv run qr-network gui
 ```
 
-1. Click **Start Scanning**.
-2. Hold a WiFi QR Code up to your camera.
-3. The app will automatically add the network to your System Settings and connect.
+1. **Optional:** Check "Confirm before connecting" to review network details first.
+2. **Optional:** Check "Add to settings only" if you don't want to connect immediately.
+3. Click **Start Scanning**.
+4. Hold a WiFi QR Code up to your camera.
+5. The app will act based on your settings (Auto-connect or Save-only).
 
 ### CLI Mode (Terminal)
 
@@ -78,16 +80,19 @@ uv run qr-network scan
 
 **Options:**
 
-* `--timeout <seconds>`: Stop scanning after N seconds (default: 30).
+* `--timeout <seconds>`: Stop scanning after N seconds (default: 60).
 * `--camera <id>`: Use a specific camera index (default: 0).
+* `--screen`: Scan from the screen instead of the camera.
 * `-v, --verbose`: Show debug logs.
 
 **Example:**
 
 ```bash
-# Scan with verbose logging and a 60s timeout
-uv run qr-network scan --verbose --timeout 60
+# Scan with verbose logging and a 30s timeout
+uv run qr-network scan --verbose --timeout 30
 ```
+
+> **Note:** The CLI returns specific exit codes (0=Success, 10=Camera Error, 20=Network Error, 30=Timeout, 40=User Cancel) for easier scripting.
 
 ## ⚠️ Permissions & Troubleshooting
 

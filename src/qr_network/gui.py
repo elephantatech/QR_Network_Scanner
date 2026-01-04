@@ -337,48 +337,88 @@ class QRNetworkApp:
         self.help_text.insert(tk.END, "How to Use\n", "h2")
         self.help_text.insert(
             tk.END,
-            "1. Have a WiFi QR code ready (e.g. from Android WiFi sharing).\n",
+            "1. (Optional) Toggle 'Confirm before connecting' or 'Add only'.\n",
             "step",
         )
         self.help_text.insert(
-            tk.END, "2. Go to the 'Scanner' tab and click 'Start Scanning'.\n", "step"
+            tk.END, "2. Click 'Start Scanning' or 'Scan Screen'.\n", "step"
         )
         self.help_text.insert(
             tk.END,
-            "3. Point the camera at the code. The app will auto-connect.\n",
+            "3. Point camera at code OR ensure QR is visible on screen.\n",
+            "step",
+        )
+        self.help_text.insert(
+            tk.END,
+            "4. The app will auto-connect or save based on your settings.\n",
             "step",
         )
 
-        self.help_text.insert(tk.END, "CLI Mode (Advanced)\n", "h2")
-        self.help_text.insert(tk.END, "Run from Source (Terminal):\n", "step")
-        self.help_text.insert(tk.END, "• uv run qr-network scan\n", "li")
-
-        self.help_text.insert(tk.END, "Run from Built App (.app):\n", "step")
+        self.help_text.insert(tk.END, "CLI Mode (Terminal)\n", "h2")
+        self.help_text.insert(tk.END, "Run from Installed App:\n", "step")
         self.help_text.insert(
             tk.END,
-            "• ./dist/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan\n",
+            "• /Applications/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan --help\n",
+            "li",
+        )
+
+        self.help_text.insert(tk.END, "Command Options:\n", "step")
+        self.help_text.insert(
+            tk.END,
+            "• --screen: Captures and scans content from your screen(s).\n",
             "li",
         )
         self.help_text.insert(
-            tk.END, "(Do NOT use the 'open' command for CLI arguments!)\n", "li"
+            tk.END,
+            "• --timeout <SEC>: Stops scanning after specified seconds (default: 60).\n",
+            "li",
         )
+        self.help_text.insert(
+            tk.END,
+            "• --camera <ID>: Select a specific camera device index (0, 1, ...).\n",
+            "li",
+        )
+        self.help_text.insert(
+            tk.END,
+            "• --verbose (-v): Enable detailed debug logging to console.\n",
+            "li",
+        )
+
+        self.help_text.insert(tk.END, "Run from Source (Dev):\n", "step")
+        self.help_text.insert(tk.END, "• uv run qr-network scan\n", "li")
+
+        self.help_text.insert(tk.END, "UI Options Explained\n", "h2")
+        self.help_text.insert(tk.END, "• Confirm before connecting:\n", "step")
+        self.help_text.insert(
+            tk.END,
+            "  Shows a dialog with Network Name (SSID) and Security Type before initiating connection.\n",
+            "li",
+        )
+        self.help_text.insert(tk.END, "• Add to settings only:\n", "step")
+        self.help_text.insert(
+            tk.END,
+            "  Saves the network profile to System Settings so you can connect manually later, but does not switch your WiFi immediately.\n",
+            "li",
+        )
+
+        self.help_text.insert(tk.END, "Security & Privacy\n", "h2")
+        self.help_text.insert(tk.END, "• Credentials stored in macOS Keychain.\n", "li")
+        self.help_text.insert(tk.END, "• Logs are redacted (no passwords).\n", "li")
+        self.help_text.insert(tk.END, "• Source code is open for review.\n", "li")
 
         self.help_text.insert(tk.END, "Frequently Asked Questions (FAQ)\n", "h2")
 
         self.help_text.insert(tk.END, "Q: Camera shows 'Could not open camera'\n", "q")
         self.help_text.insert(tk.END, "A: This is a macOS permission issue.\n", "a")
-        self.help_text.insert(tk.END, "• You must click 'Allow' when prompted.\n", "li")
         self.help_text.insert(
-            tk.END, "• IMPORTANT: Restart the app after granting permission.\n", "li"
+            tk.END, "• Click 'Check Permissions' in Help menu.\n", "li"
         )
-        self.help_text.insert(
-            tk.END, "• Check System Settings > Privacy > Camera.\n", "li"
-        )
+        self.help_text.insert(tk.END, "• Restart app after granting access.\n", "li")
 
         self.help_text.insert(tk.END, "Q: It's scanning but not detecting?\n", "q")
         self.help_text.insert(
             tk.END,
-            "A: Move the code closer/further. Ensure good lighting. The content must be a standard WiFi QR code.\n",
+            "A: Ensure good lighting. Moving closer/further helps. Timeout is 60s.\n",
             "a",
         )
 
@@ -420,11 +460,23 @@ class QRNetworkApp:
         pad_frame = tk.Frame(about_window, bg="white", padx=20, pady=20)
         pad_frame.pack(fill=tk.BOTH, expand=True)
 
+        # Icon
+        try:
+            icon_path = resource_path("assets/icon.png")
+            icon_img = Image.open(icon_path)
+            icon_img = icon_img.resize((64, 64), Image.Resampling.LANCZOS)
+            icon_tk = ImageTk.PhotoImage(icon_img)
+            icon_label = tk.Label(pad_frame, image=icon_tk, bg="white")
+            icon_label.image = icon_tk  # Keep ref
+            icon_label.pack(pady=(0, 10))
+        except Exception:
+            pass
+
         tk.Label(
             pad_frame, text="QR Network Scanner", font=("Arial", 16, "bold"), bg="white"
         ).pack(pady=(0, 10))
         tk.Label(
-            pad_frame, text="v0.1.0-beta.11", font=("Arial", 10), fg="#666", bg="white"
+            pad_frame, text="v0.1.0-beta.13", font=("Arial", 10), fg="#666", bg="white"
         ).pack()
 
         copyright_text = (
@@ -541,6 +593,18 @@ class QRNetworkApp:
 
         pad = tk.Frame(perm_window, bg="white", padx=20, pady=20)
         pad.pack(fill=tk.BOTH, expand=True)
+
+        # Icon
+        try:
+            icon_path = resource_path("assets/icon.png")
+            icon_img = Image.open(icon_path)
+            icon_img = icon_img.resize((64, 64), Image.Resampling.LANCZOS)
+            icon_tk = ImageTk.PhotoImage(icon_img)
+            icon_label = tk.Label(pad, image=icon_tk, bg="white")
+            icon_label.image = icon_tk  # Keep ref
+            icon_label.pack(pady=(0, 10))
+        except Exception:
+            pass
 
         tk.Label(
             pad,

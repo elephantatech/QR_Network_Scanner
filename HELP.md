@@ -20,41 +20,33 @@ If you prefer the terminal or want to run from source code using `uv`, you can u
 
 * **uv** installed (Python package manager).
 
-### Running from Repo
+### Running the CLI
 
-Clone the repository and run:
+**Preferred Method (Installed App):**
+
+If you have installed the app to your Applications folder, run the CLI tool directly:
 
 ```bash
-# GUI Mode
-uv run qr-network gui
+/Applications/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan --help
+```
 
-# CLI Scanning Mode
+**(Dev Mode) Running from Source:**
+
+```bash
 uv run qr-network scan
 ```
 
 ### CLI Options
 
-When running `qr-network scan`:
-
-* **`--verbose` / `-v`**: Enable detailed logging (useful for debugging).
+* **`--verbose` / `-v`**: Enable detailed logging.
 * **`--camera <ID>`**: Select a specific camera (Default: 0).
-* **`--timeout <SECONDS>`**: Set how long to wait before stopping (Default: 60s).
-
-### 🍎 Running CLI from Built App (.app)
-
-If you have built the application (`dist/QRNetworkScanner.app`), you cannot use the `open` command with arguments. You must run the executable directly:
-
-```bash
-# Correct way to run CLI from the .app
-./dist/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan --verbose
-```
-
-*(Note: You may need to grant Terminal permission to access the Camera)*
+* **`--timeout <SECONDS>`**: Set timeout (Default: 60s).
+* **`--screen`**: Scan from screen.
 
 **Example:**
 
 ```bash
-uv run qr-network scan --verbose --timeout 30
+/Applications/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan --verbose --timeout 30
 ```
 
 ---

@@ -1,100 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Network Scanner - Help Guide</title>
+    <title>QR Network Scanner - Help</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; background: #f9f9f9; }
-        .container { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { color: #007AFF; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        h2 { color: #333; margin-top: 30px; }
-        .step { background: #f0f7ff; padding: 15px; border-left: 4px solid #007AFF; margin: 10px 0; border-radius: 4px; }
-        .faq-item { margin-bottom: 20px; }
-        .question { font-weight: bold; font-size: 1.1em; color: #d63031; cursor: pointer; }
-        .answer { margin-left: 20px; margin-top: 5px; color: #555; }
-        code { background: #eee; padding: 2px 5px; border-radius: 3px; font-family: monospace; }
-        pre { background: #2d3436; color: #fff; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
 
-        /* Search */
-        #search-box { width: 100%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 6px; margin-bottom: 20px; box-sizing: border-box; }
-        #search-box:focus { border-color: #007AFF; outline: none; }
-        .highlight { background-color: yellow; }
+        h1 {
+            color: #007AFF;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
 
-        .btn { display: inline-block; padding: 10px 20px; background: #24292e; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
-        .btn:hover { background: #444; }
+        h2 {
+            color: #333;
+            margin-top: 30px;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .step {
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .note {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .success {
+            color: #2e7d32;
+        }
+
+        .footer {
+            margin-top: 50px;
+            font-size: 0.9em;
+            color: #666;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-    <h1>📶 QR Network Scanner Help</h1>
-
-    <input type="text" id="search-box" placeholder="🔍 Search help..." onkeyup="filterHelp()">
-
-    <div id="content">
-        <p>Welcome to the QR Network Scanner user guide.</p>
-
-        <a href="https://github.com/elephantatech/QR_Network_Scanner/issues" class="btn" target="_blank">🐛 Report an Issue on GitHub</a>
-
-        <h2>📱 How to Use</h2>
-        <div class="step">1. <strong>Prepare:</strong> Have a WiFi QR code ready (e.g. from Android).</div>
-        <div class="step">2. <strong>Scan:</strong> Click "Start Scanning" in the app.</div>
-        <div class="step">3. <strong>Connect:</strong> Point camera at code. The app auto-connects.</div>
-
-        <h2>💻 CLI Mode (Advanced)</h2>
-        <p><strong>Running from Source:</strong></p>
-        <pre>uv run qr-network scan</pre>
-
-        <p><strong>Running from Built App:</strong></p>
-        <pre>./dist/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan</pre>
-
-        <h2>❓ Frequently Asked Questions</h2>
-
-        <div class="faq-item">
-            <div class="question">Q: "Could not open camera" error?</div>
-            <div class="answer">
-                This is a macOS permission issue.<br>
-                1. Click <strong>Allow</strong> when prompted.<br>
-                2. <strong>RESTART</strong> the app completely.<br>
-                3. Check <em>System Settings > Privacy > Camera</em>.
-            </div>
-        </div>
-
-        <div class="faq-item">
-            <div class="question">Q: Scanning but not detecting?</div>
-            <div class="answer">Move closer/further. Ensure good lighting. Avoid glare.</div>
-        </div>
-
-        <div class="faq-item">
-            <div class="question">Q: Where are the logs?</div>
-            <div class="answer">
-                Debug Log: <code>~/qr_network_debug.log</code><br>
-                Crash Log: <code>~/qr_crash.log</code>
-            </div>
-        </div>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="icon.png" alt="QR Network Scanner Logo" width="96" height="96">
     </div>
-</div>
 
-<script>
-    function filterHelp() {
-        let input = document.getElementById('search-box').value.toLowerCase();
-        let content = document.getElementById('content');
-        let items = content.getElementsByTagName('div'); // Naive, but works for blocks
+    <h1>QR Network Scanner Help</h1>
+    <p>Welcome to the QR Network Scanner documentation. This guide will help you use the application effectively and
+        troubleshoot common issues.</p>
 
-        // A simple highlighter would be better for a single page doc
-        // Let's implement full text highlighting logic instead of hiding
+    <h2>GUI Mode (Visual Scanner)</h2>
+    <p>The easiest way to use the app.</p>
 
-        let bodyText = document.querySelector(".container");
-        let instance = new Mark(bodyText);
-        instance.unmark({
-            done: function() {
-                instance.mark(input);
-            }
-        });
-    }
-</script>
-<!-- Simple highlighting library (embedded for offline usage) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js"></script>
+    <div class="step">1. (Optional) Review Settings</div>
+    <ul style="margin-top: 5px;">
+        <li><strong>Confirm before connecting:</strong> When enabled, a dialog appears after scanning a code, showing
+            the Network SSID and Security type. You must click "Yes" to proceed with the connection.</li>
+        <li><strong>Add to settings only:</strong> When enabled, the network profile (SSID and Password) is saved to
+            your macOS System Settings so you can connect manually later. The app will <strong>not</strong> attempt to
+            switch your active WiFi connection immediately.</li>
+    </ul>
+
+    <div class="step">2. Start Scanning</div>
+    <p>Click <strong>Start Scanning</strong> to use your webcam, or <strong>Scan Screen</strong> to detect a QR code
+        visible on your monitor.</p>
+
+    <div class="step">3. Scan</div>
+    <p>Hold the QR code up to the camera or ensure it is visible on your screen. The app will automatically detect it.
+    </p>
+
+    <div class="step">4. Connect</div>
+    <p>Unless "Add Only" is selected, the app will automatically switch your macOS WiFi connection to the new network.
+    </p>
+
+    <h2>CLI Mode (Terminal)</h2>
+    <p>For advanced users. Run the CLI tool embedded in the app:</p>
+
+    <pre><code>/Applications/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan [OPTIONS]</code></pre>
+
+    <p><small>Or if running from source: <code>uv run qr-network scan</code></small></p>
+
+    <h3>Options</h3>
+    <ul>
+        <li><code>--timeout &lt;seconds&gt;</code>: Sets the duration (in seconds) to listen for a QR code before giving
+            up. Default is 60 seconds.</li>
+        <li><code>--screen</code>: Captures the screen content to scan for a QR code instead of using the camera. Useful
+            for codes displayed on websites or documents.</li>
+        <li><code>--camera &lt;id&gt;</code>: Selects a specific camera device by index (0, 1, etc.). Use this if you
+            have multiple cameras connected.</li>
+        <li><code>-v, --verbose</code>: Enables detailed logging. Output will be printed to the console, helping
+            diagnose issues.</li>
+    </ul>
+
+    <h2>Security & Privacy</h2>
+    <p>We take security seriously:</p>
+    <ul>
+        <li><strong>Keychain Storage:</strong> WiFi passwords are stored securely in the macOS System Keychain using
+            native APIs.</li>
+        <li><strong>Redacted Logs:</strong> All passwords and sensitive data are automatically masked (e.g.,
+            <code>P:***;</code>) in application logs.
+        </li>
+        <li><strong>Open Source:</strong> The code is fully audit-able on GitHub.</li>
+    </ul>
+
+    <h2>Troubleshooting (FAQ)</h2>
+
+    <h3>Camera Error / "Could not open camera"</h3>
+    <p>This is usually a permission issue. macOS blocks camera access by default.</p>
+    <ol>
+        <li>Open the <strong>Help</strong> menu in the app.</li>
+        <li>Select <strong>Check Permissions...</strong></li>
+        <li>Follow the links to System Settings > Privacy & Security > Camera.</li>
+        <li>Grant access to "QR Network Scanner" or your Terminal app.</li>
+        <li><strong>Restart the app completely.</strong></li>
+    </ol>
+
+    <h3>Scanning but not detecting?</h3>
+    <ul>
+        <li>Ensure adequate lighting.</li>
+        <li>Move the QR code closer or further away (aim for 10-20cm).</li>
+        <li>Ensure the QR code is a valid WiFi QR code (starts with `WIFI:`).</li>
+    </ul>
+
+    <div class="footer">
+        <p>Version 0.1.0-beta.11 | &copy; 2026 Elephanta Technologies</p>
+    </div>
+
 </body>
+
 </html>
