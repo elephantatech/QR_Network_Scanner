@@ -1,6 +1,6 @@
 [project]
 name = "qr-network"
-version = "0.1.0-beta.16"
+version = "0.1.0-beta.17"
 description = "WiFi QR Code Scanner and Network Manager for macOS"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-qr-network = "qr_network.main:app"
+qr-network = "qr_network.main:entry_point"
 
 [project.optional-dependencies]
 dev = [

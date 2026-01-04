@@ -3,8 +3,9 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from .scanner import QRCodeScanner
-from .network import NetworkManager, WiFiQRParser
+from .capture.scanner import QRCodeScanner
+from .net.manager import NetworkManager
+from .qr.parser import WiFiQRParser
 from enum import IntEnum
 
 
@@ -28,9 +29,37 @@ def gui(
     """
     Launches the Graphical User Interface.
     """
-    from .gui import main as gui_main
+    from .ui.app import main as gui_main
 
     gui_main(debug=debug)
+
+
+@app.command()
+def list_cameras():
+    """
+    Lists available cameras and their IDs.
+    """
+    from .utils import get_camera_names
+
+    console.print(Panel.fit("Available Cameras", style="bold blue"))
+
+    cameras = get_camera_names()
+
+    if not cameras:
+        console.print("[yellow]No cameras detected.[/yellow]")
+        return
+
+    # Create a simple table or list
+    from rich.table import Table
+
+    table = Table(title="Connected Cameras")
+    table.add_column("ID", justify="right", style="cyan", no_wrap=True)
+    table.add_column("Name", style="magenta")
+
+    for idx, name in enumerate(cameras):
+        table.add_row(str(idx), name)
+
+    console.print(table)
 
 
 @app.command()

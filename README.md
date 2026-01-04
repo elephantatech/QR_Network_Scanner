@@ -82,6 +82,7 @@ uv run qr-network scan
 
 * `--timeout <seconds>`: Stop scanning after N seconds (default: 60).
 * `--camera <id>`: Use a specific camera index (default: 0).
+* `list-cameras`: List all available cameras and their IDs.
 * `--screen`: Scan from the screen instead of the camera.
 * `-v, --verbose`: Show debug logs.
 

@@ -30,6 +30,37 @@ If you have installed the app to your Applications folder, run the CLI tool dire
 /Applications/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan --help
 ```
 
+### ⚡ Setting up an Alias (Recommended)
+
+To run the app simply by typing `qr-network`, add an alias to your shell configuration. You have 3 ways to do this:
+
+**Option A: Native Menu (Easiest)**
+
+1. Open the app.
+2. Go to **Help** in the macOS menu bar.
+3. Click **Install Alias to ~/.zshrc** (Automated) or **Copy CLI Alias** (Manual Paste).
+
+**Option B: GUI Button**
+
+1. Open the **Help & FAQ** tab.
+2. Click **💻 CLI Setup**.
+3. Click **⚡ Install to ~/.zshrc** or **📋 Copy Alias**.
+
+**Option C: Manual Configuration**
+
+1. Open your terminal config (e.g., `~/.zshrc`).
+2. Add the following line:
+
+   ```bash
+   alias qr-network="/Applications/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner"
+   ```
+
+3. Restart your terminal. Now you can use:
+
+   ```bash
+   qr-network scan
+   ```
+
 **(Dev Mode) Running from Source:**
 
 ```bash
@@ -40,6 +71,7 @@ uv run qr-network scan
 
 * **`--verbose` / `-v`**: Enable detailed logging.
 * **`--camera <ID>`**: Select a specific camera (Default: 0).
+* **`list-cameras`**: List extracted camera names and IDs.
 * **`--timeout <SECONDS>`**: Set timeout (Default: 60s).
 * **`--screen`**: Scan from screen.
 

@@ -1,14 +1,15 @@
-from .cli import app
-
-
 def entry_point():
     import sys
 
-    # If run without arguments (e.g. double-clicked app), default to GUI
-    # Users can still pass --debug via CLI or shortcut if needed
-    if len(sys.argv) == 1:
-        sys.argv.append("gui")
-    app()
+    # If arguments are provided, use CLI. Otherwise launch GUI.
+    if len(sys.argv) > 1:
+        from qr_network.cli import app
+
+        app()
+    else:
+        from qr_network.ui.app import main as gui_main
+
+        gui_main()
 
 
 if __name__ == "__main__":

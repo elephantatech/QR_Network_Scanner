@@ -5,6 +5,24 @@ All notable changes to the **QR Network Scanner** project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-beta.17] - 2026-01-04
+
+### Architecture
+
+- **Refactor:** Restructured the codebase into modular components: `qr/` (parsing), `capture/` (scanning), `net/` (network mgmt), and `ui/` (GUI). This improves maintainability and separation of concerns.
+
+### Added
+
+- **Data Validation:** Implemented robust validation for scanned QR data (SSID presence, valid security types, password requirements).
+- **CLI Command:** Added `list-cameras` command to easily identify available camera IDs.
+- **CLI Helper:** Added "CLI Setup" button with **Auto-Install** feature (`~/.zshrc`).
+- **Native Menu:** Added "Copy Alias" and "Install to .zshrc" directly to the macOS Help menu.
+
+### Fixed
+
+- **CLI Entry Point:** Resolved `ImportError` by correcting the entry point in `pyproject.toml`.
+- **GUI Crash:** Fixed `NameError` and `ModuleNotFoundError` issues caused by missing imports during the refactor.
+
 ## [0.1.0-beta.16] - 2026-01-04
 
 ### UX Enhancements

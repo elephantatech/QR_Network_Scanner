@@ -27,4 +27,4 @@ Instead, it leverages the native macOS `networksetup` utility. When a network is
 
 ## Reporting Vulnerabilities
 
-If you discover a security vulnerability, please report it via [GitHub Issues](https://github.com/elephantatech/QR_Network_Scanner/issues) or email <security@elephantatech.com> (example).
+If you discover a security vulnerability, please report it via [GitHub Issues](https://github.com/elephantatech/QR_Network_Scanner/issues) or DM us on X [@elephantatech](https://x.com/elephantatech).

@@ -107,17 +107,23 @@
 
     <p><small>Or if running from source: <code>uv run qr-network scan</code></small></p>
 
-    <h3>Options</h3>
+    <h3>CLI Options:</h3>
     <ul>
-        <li><code>--timeout &lt;seconds&gt;</code>: Sets the duration (in seconds) to listen for a QR code before giving
-            up. Default is 60 seconds.</li>
-        <li><code>--screen</code>: Captures the screen content to scan for a QR code instead of using the camera. Useful
-            for codes displayed on websites or documents.</li>
-        <li><code>--camera &lt;id&gt;</code>: Selects a specific camera device by index (0, 1, etc.). Use this if you
-            have multiple cameras connected.</li>
-        <li><code>-v, --verbose</code>: Enables detailed logging. Output will be printed to the console, helping
-            diagnose issues.</li>
+        <li><code>list-cameras</code>: List all connected cameras and their IDs.</li>
+        <li><code>--timeout &lt;SEC&gt;</code>: Set scan timeout (Default: 60s).</li>
+        <li><code>--screen</code>: Scan from screen (-s).</li>
+        <li><code>--camera &lt;ID&gt;</code>: Select camera index.</li>
+        <li><code>--verbose</code>: Enable detailed logs (-v).</li>
     </ul>
+
+    <h3>⚡ Setting up an Alias</h3>
+    <p>To run the command as <code>qr-network</code> instead of the full path:</p>
+    <ol>
+        <li>Open the app and go to the <strong>Help</strong> menu (top bar).</li>
+        <li>Select <strong>Install Alias to ~/.zshrc</strong> to add it automatically.</li>
+        <li>Alternatively, select <strong>Copy CLI Alias</strong> to paste it manually into your config.</li>
+        <li>Restart your terminal.</li>
+    </ol>
 
     <h2>Security & Privacy</h2>
     <p>We take security seriously:</p>
@@ -150,7 +156,7 @@
     </ul>
 
     <div class="footer">
-        <p>Version 0.1.0-beta.11 | &copy; 2026 Elephanta Technologies</p>
+        <p>Version 0.1.0-beta.17 | &copy; 2026 Elephanta Technologies</p>
     </div>
 
 </body>

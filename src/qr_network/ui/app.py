@@ -1,16 +1,17 @@
 import tkinter as tk
+from tkinter import ttk, messagebox, Label, scrolledtext
 import webbrowser
-from tkinter import scrolledtext, messagebox, Label
-import tkinter.ttk as ttk
-from .scanner import QRCodeScanner
-from .network import NetworkManager, WiFiQRParser
-from .utils import RedactedLogger
+import os
 import sys
-import cv2
 import time
+import cv2
 from PIL import Image, ImageTk
 
-import os
+# Updated imports for refactor
+from ..capture.scanner import QRCodeScanner
+from ..net.manager import NetworkManager
+from ..qr.parser import WiFiQRParser
+from ..utils import RedactedLogger, get_camera_names
 
 
 def resource_path(relative_path):
@@ -36,6 +37,9 @@ class QRNetworkApp:
         self.log_file = (
             os.path.join(home_dir, "qr_network_debug.log") if debug else None
         )
+
+        # CLI Alias Command
+        self.alias_cmd = 'alias qr-network="/Applications/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner"'
 
         if self.debug and self.log_file:
             try:
@@ -192,6 +196,15 @@ class QRNetworkApp:
             label="Check Permissions...",
             command=lambda: self.show_permission_help("General"),
         )
+        help_menu.add_separator()
+        help_menu.add_command(
+            label="Copy CLI Alias",
+            command=self.copy_alias_to_clipboard,
+        )
+        help_menu.add_command(
+            label="Install Alias to ~/.zshrc",
+            command=self.install_alias_to_zshrc,
+        )
 
         self.root.config(menu=menubar)
 
@@ -233,7 +246,6 @@ class QRNetworkApp:
         tk.Label(row1, text="Camera:", bg="#f0f0f0").pack(side=tk.LEFT)
 
         # Fetch actual camera names if possible (macOS)
-        from .utils import get_camera_names
 
         camera_names = get_camera_names()
 
@@ -328,6 +340,11 @@ class QRNetworkApp:
         btn_about = tk.Button(toolbar, text="ℹ️ About", command=self.show_about)
         btn_about.pack(side=tk.RIGHT, padx=5)
 
+        btn_cli = tk.Button(
+            toolbar, text="💻 CLI Setup", command=self.show_cli_alias_help, bg="#e3f2fd"
+        )
+        btn_cli.pack(side=tk.RIGHT, padx=5)
+
         # --- Help Text Area ---
         self.help_text = scrolledtext.ScrolledText(
             self.help_frame, wrap=tk.WORD, font=("Segoe UI", 11), padx=20, pady=20, bd=0
@@ -400,22 +417,11 @@ class QRNetworkApp:
         self.help_text.insert(tk.END, "Command Options:\n", "step")
         self.help_text.insert(
             tk.END,
-            "• --screen: Captures and scans content from your screen(s).\n",
-            "li",
-        )
-        self.help_text.insert(
-            tk.END,
-            "• --timeout <SEC>: Stops scanning after specified seconds (default: 60).\n",
-            "li",
-        )
-        self.help_text.insert(
-            tk.END,
-            "• --camera <ID>: Select a specific camera device index (0, 1, ...).\n",
-            "li",
-        )
-        self.help_text.insert(
-            tk.END,
-            "• --verbose (-v): Enable detailed debug logging to console.\n",
+            "• list-cameras: Show available cameras and IDs.\n"
+            "• --camera <ID>: Select a specific camera.\n"
+            "• --timeout <SEC>: Stop scan after N seconds.\n"
+            "• --screen: Scan from screen.\n"
+            "• --verbose (-v): Enable debug logs.\n",
             "li",
         )
 
@@ -511,7 +517,7 @@ class QRNetworkApp:
             pad_frame, text="QR Network Scanner", font=("Arial", 16, "bold"), bg="white"
         ).pack(pady=(0, 10))
         tk.Label(
-            pad_frame, text="v0.1.0-beta.16", font=("Arial", 10), fg="#666", bg="white"
+            pad_frame, text="v0.1.0-beta.17", font=("Arial", 10), fg="#666", bg="white"
         ).pack()
 
         copyright_text = (
@@ -566,6 +572,103 @@ class QRNetworkApp:
                 self.show_error_with_copy(
                     "Camera Error", f"Could not start camera:\n{e}"
                 )
+
+    def install_alias_to_zshrc(self):
+        """Installs the CLI alias to ~/.zshrc"""
+        try:
+            zshrc_path = os.path.expanduser("~/.zshrc")
+            # Check if already exists
+            if os.path.exists(zshrc_path):
+                with open(zshrc_path, "r") as f:
+                    content = f.read()
+                    if self.alias_cmd in content:
+                        messagebox.showinfo("Info", "Alias already exists in ~/.zshrc")
+                        return
+
+            with open(zshrc_path, "a") as f:
+                f.write(f"\n# QR Network Scanner Alias\n{self.alias_cmd}\n")
+
+            messagebox.showinfo(
+                "Success", f"Alias added to {zshrc_path}\nPlease restart your terminal."
+            )
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not write to .zshrc:\n{e}")
+
+    def copy_alias_to_clipboard(self):
+        """Copies the CLI alias to clipboard"""
+        self.root.clipboard_clear()
+        self.root.clipboard_append(self.alias_cmd)
+        self.root.update()
+        messagebox.showinfo("Copied", "Alias command copied to clipboard!")
+
+    def show_cli_alias_help(self):
+        """Shows a dialog with CLI alias instructions."""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("CLI Setup")
+        dialog.geometry("500x350")
+        dialog.config(bg="white")
+
+        pad = tk.Frame(dialog, bg="white", padx=20, pady=20)
+        pad.pack(fill=tk.BOTH, expand=True)
+
+        tk.Label(
+            pad,
+            text="Run from Terminal",
+            font=("Arial", 14, "bold"),
+            bg="white",
+            fg="#007AFF",
+        ).pack(pady=(0, 10))
+
+        tk.Label(
+            pad,
+            text="To run this app from your terminal using 'qr-network', paste this alias into your shell config (e.g., ~/.zshrc):",
+            bg="white",
+            justify=tk.LEFT,
+            wraplength=450,
+        ).pack(anchor=tk.W)
+
+        # Alias Command
+        cmd_frame = tk.Frame(
+            pad, bg="#f5f5f5", padx=10, pady=10, relief=tk.SUNKEN, bd=1
+        )
+        cmd_frame.pack(fill=tk.X, pady=10)
+
+        lbl_cmd = tk.Label(
+            cmd_frame,
+            text=self.alias_cmd,
+            bg="#f5f5f5",
+            fg="#333",
+            font=("Courier", 11),
+            wraplength=430,
+            justify=tk.LEFT,
+        )
+        lbl_cmd.pack(fill=tk.X)
+
+        # Copy Button (Use simplified local wrapper to update button text instead of generic popup)
+        def copy_cmd_local():
+            self.root.clipboard_clear()
+            self.root.clipboard_append(self.alias_cmd)
+            self.root.update()
+            btn_copy.config(text="Copied! ✓")
+
+        btn_copy = ttk.Button(pad, text="📋 Copy Alias", command=copy_cmd_local)
+        btn_copy.pack(pady=5)
+
+        # Auto-install Button
+        btn_install = ttk.Button(
+            pad, text="⚡ Install to ~/.zshrc", command=self.install_alias_to_zshrc
+        )
+        btn_install.pack(pady=5)
+
+        tk.Label(
+            pad,
+            text="After adding, restart terminal and run:\n  qr-network scan",
+            bg="white",
+            justify=tk.CENTER,
+            fg="#666",
+        ).pack(pady=10)
+
+        tk.Button(pad, text="Close", command=dialog.destroy).pack(side=tk.BOTTOM)
 
     def show_error_with_copy(self, title, message):
         """Shows an error dialog with a 'Copy Debug Info' button."""

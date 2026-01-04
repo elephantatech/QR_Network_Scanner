@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from qr_network.network import NetworkManager
+from qr_network.net.manager import NetworkManager
 
 
 # Mock platform.system to return "Darwin" for these tests

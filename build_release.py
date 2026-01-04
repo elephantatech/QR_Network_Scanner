@@ -16,14 +16,13 @@ def build():
 
     PyInstaller.__main__.run(
         [
-            "launcher.py",
+            "src/qr_network/main.py",  # Updated entry point
             "--name=QRNetworkScanner",
-            "--windowed",  # Create a .app bundle
+            "--windowed",  # No console window
             "--icon=assets/icon.png",  # App Icon
             "--add-data=assets/icon.png:assets",  # Include in bundle
             "--add-data=assets/help.html:assets",  # Include HTML help
             "--clean",
-            "--noconfirm",
             "--noconfirm",
             # Hidden imports often needed for these libraries
             "--hidden-import=rich",

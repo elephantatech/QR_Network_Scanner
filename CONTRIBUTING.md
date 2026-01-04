@@ -58,6 +58,15 @@ If a hook fails, it may have auto-fixed the file. Review the changes, `git add` 
 
 ## 📝 Best Practices
 
+### Architecture Overview
+
+The project is structured into modular components:
+
+- `src/qr_network/qr/`: Pure QR parsing logic.
+- `src/qr_network/capture/`: Camera and screen scanning.
+- `src/qr_network/net/`: Network management operations.
+- `src/qr_network/ui/`: GUI application code.
+
 1. **Atomic Commits:** Keep commits focused on a single change.
 2. **Tests:** Add unit tests for new features in the `tests/` directory.
 3. **Documentation:** Update `README.md` or `HELP.md` if you change user-facing features.
@@ -74,7 +83,11 @@ uv run qr-network gui
 **CLI Mode:**
 
 ```bash
+# Scan mode
 uv run qr-network scan
+
+# List available cameras
+uv run qr-network list-cameras
 ```
 
 We look forward to your PRs! 🚀

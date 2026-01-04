@@ -1,5 +1,5 @@
 import pytest
-from qr_network.network import WiFiQRParser
+from qr_network.qr.parser import WiFiQRParser
 
 
 @pytest.mark.parametrize(
@@ -75,11 +75,6 @@ from qr_network.network import WiFiQRParser
             "WIFI:S:DefaultType;;",
             {"ssid": "DefaultType", "type": "nopass", "password": "", "hidden": False},
         ),
-        # Missing Password (empty string)
-        (
-            "WIFI:S:NoPassField;T:WPA;;",
-            {"ssid": "NoPassField", "type": "WPA", "password": "", "hidden": False},
-        ),
         # Hidden
         (
             "WIFI:S:Hid;T:WPA;P:p;H:true;;",
@@ -108,3 +103,23 @@ def test_parser_invalid_format():
 def test_parser_missing_ssid():
     with pytest.raises(ValueError, match="No SSID found"):
         WiFiQRParser.parse("WIFI:T:WPA;P:pass;;")
+
+
+def test_parser_empty_ssid():
+    with pytest.raises(ValueError, match="SSID cannot be empty"):
+        WiFiQRParser.parse("WIFI:S:   ;T:nopass;;")
+
+
+def test_parser_invalid_type():
+    with pytest.raises(ValueError, match="Unsupported security type"):
+        WiFiQRParser.parse("WIFI:S:MyNet;T:INVALID_TYPE;;")
+
+
+def test_parser_missing_password_wpa():
+    with pytest.raises(ValueError, match="Password is required"):
+        WiFiQRParser.parse("WIFI:S:MyNet;T:WPA;;")
+
+
+def test_parser_empty_password_wpa():
+    with pytest.raises(ValueError, match="Password is required"):
+        WiFiQRParser.parse("WIFI:S:MyNet;T:WPA;P:;;")
