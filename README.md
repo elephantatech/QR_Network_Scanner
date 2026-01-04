@@ -115,4 +115,6 @@ Found a bug? Have a feature request?
 * [Report a Bug](.github/ISSUE_TEMPLATE/bug_report.md)
 * [Request a Feature](.github/ISSUE_TEMPLATE/feature_request.md)
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for developer setup and guidelines.
+
 License: Apache 2.0

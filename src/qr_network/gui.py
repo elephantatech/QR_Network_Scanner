@@ -395,7 +395,7 @@ class QRNetworkApp:
             pad_frame, text="QR Network Scanner", font=("Arial", 16, "bold"), bg="white"
         ).pack(pady=(0, 10))
         tk.Label(
-            pad_frame, text="v0.1.0-beta.9", font=("Arial", 10), fg="#666", bg="white"
+            pad_frame, text="v0.1.0-beta.10", font=("Arial", 10), fg="#666", bg="white"
         ).pack()
 
         copyright_text = (
