@@ -5,6 +5,18 @@ All notable changes to the **QR Network Scanner** project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-beta.15] - 2026-01-04
+
+### Branding
+
+- **Title Bar:** Removed the emoji from the window title for a cleaner, native look. The application icon is now handled exclusively by the OS window manager and Dock.
+
+## [0.1.0-beta.14] - 2026-01-04
+
+### Branding
+
+- **GUI Refinement:** Removed the emoji from the window title and added the official application logo to the main Scanner tab for a more professional look.
+
 ## [0.1.0-beta.13] - 2026-01-04
 
 ### Documentation & Branding

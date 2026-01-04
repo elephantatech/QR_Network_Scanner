@@ -27,7 +27,7 @@ def resource_path(relative_path):
 class QRNetworkApp:
     def __init__(self, root, debug=False):
         self.root = root
-        self.root.title("📶 QR Network Scanner")
+        self.root.title("QR Network Scanner")
         self.root.geometry("800x700")
         self.debug = debug
 
@@ -476,7 +476,7 @@ class QRNetworkApp:
             pad_frame, text="QR Network Scanner", font=("Arial", 16, "bold"), bg="white"
         ).pack(pady=(0, 10))
         tk.Label(
-            pad_frame, text="v0.1.0-beta.13", font=("Arial", 10), fg="#666", bg="white"
+            pad_frame, text="v0.1.0-beta.15", font=("Arial", 10), fg="#666", bg="white"
         ).pack()
 
         copyright_text = (
