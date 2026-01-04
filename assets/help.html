@@ -15,7 +15,7 @@
         .answer { margin-left: 20px; margin-top: 5px; color: #555; }
         code { background: #eee; padding: 2px 5px; border-radius: 3px; font-family: monospace; }
         pre { background: #2d3436; color: #fff; padding: 15px; border-radius: 5px; overflow-x: auto; }
-        
+
         /* Search */
         #search-box { width: 100%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 6px; margin-bottom: 20px; box-sizing: border-box; }
         #search-box:focus { border-color: #007AFF; outline: none; }
@@ -29,7 +29,7 @@
 
 <div class="container">
     <h1>📶 QR Network Scanner Help</h1>
-    
+
     <input type="text" id="search-box" placeholder="🔍 Search help..." onkeyup="filterHelp()">
 
     <div id="content">
@@ -45,12 +45,12 @@
         <h2>💻 CLI Mode (Advanced)</h2>
         <p><strong>Running from Source:</strong></p>
         <pre>uv run qr-network scan</pre>
-        
+
         <p><strong>Running from Built App:</strong></p>
         <pre>./dist/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan</pre>
 
         <h2>❓ Frequently Asked Questions</h2>
-        
+
         <div class="faq-item">
             <div class="question">Q: "Could not open camera" error?</div>
             <div class="answer">
@@ -84,7 +84,7 @@
 
         // A simple highlighter would be better for a single page doc
         // Let's implement full text highlighting logic instead of hiding
-        
+
         let bodyText = document.querySelector(".container");
         let instance = new Mark(bodyText);
         instance.unmark({
