@@ -725,7 +725,7 @@ wheels = [
 
 [[package]]
 name = "qr-network"
-version = "0.1.0b10"
+version = "0.1.0b11"
 source = { editable = "." }
 dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },

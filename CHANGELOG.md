@@ -5,6 +5,26 @@ All notable changes to the **QR Network Scanner** project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-beta.11] - 2026-01-04
+
+### Security
+
+- **Confirm before Connect:** Added an option to review network details before connecting.
+- **Add Only Mode:** Added an option to save the network profile without automatically connecting.
+- **Redacted Logging:** Passwords and sensitive data are now redacted from application logs.
+- **Documentation:** Added `docs/SECURITY.md` detailing credential storage and threat model.
+
+### Added
+
+- **Permission Assistant:** New helper window with deep links to macOS System Settings for Camera and Wi-Fi access.
+- **Timeout UX:** Visual countdown timer (60s) and retry option for scanning.
+- **Error Dialogs:** Added "Copy Debug Info" button to GUI error messages for easier reporting.
+- **CLI Exit Codes:** Implemented structured exit codes for better scriptability.
+
+### Fixed
+
+- **GUI Crash:** Fixed an initialization order bug that caused a crash on startup.
+
 ## [0.1.0-beta.10] - 2026-01-04
 
 ### Added

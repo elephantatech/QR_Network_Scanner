@@ -102,10 +102,10 @@ class NetworkManager:
 
         return self._run_command(cmd)
 
-    def connect_network(self, ssid: str, password: str):
+    def activate_network(self, ssid: str, password: str):
         """
-        Attempts to connect to the network.
-        Uses -setairportnetwork
+        Attempts to connect to (activate) the network.
+        Uses -setairportnetwork which joins and saves credentials if successful.
         """
         cmd = ["networksetup", "-setairportnetwork", self.interface, ssid]
         if password:

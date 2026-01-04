@@ -4,8 +4,10 @@ from tkinter import scrolledtext, messagebox, Label
 import tkinter.ttk as ttk
 from .scanner import QRCodeScanner
 from .network import NetworkManager, WiFiQRParser
+from .utils import RedactedLogger
 import sys
 import cv2
+import time
 from PIL import Image, ImageTk
 
 import os
@@ -121,6 +123,13 @@ class QRNetworkApp:
         self.help_frame = tk.Frame(self.notebook, bg="white")
         self.notebook.add(self.help_frame, text="  ❓ Help & FAQ  ")
 
+        # Security Options
+        self.confirm_connect = tk.BooleanVar(value=False)
+        self.add_only = tk.BooleanVar(value=False)
+
+        # Initialize Redactor
+        self._redactor = RedactedLogger(None)
+
         self.setup_scanner_ui()
         self.setup_help_ui()
 
@@ -178,6 +187,11 @@ class QRNetworkApp:
                 "https://github.com/elephantatech/QR_Network_Scanner/issues"
             ),
         )
+        help_menu.add_separator()
+        help_menu.add_command(
+            label="Check Permissions...",
+            command=lambda: self.show_permission_help("General"),
+        )
 
         self.root.config(menu=menubar)
 
@@ -207,6 +221,21 @@ class QRNetworkApp:
             cursor="hand2",
         )
         self.screen_scan_btn.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(5, 0))
+
+        # Security Options Frame
+        opt_frame = tk.Frame(self.scanner_frame, bg="#f0f0f0")
+        opt_frame.pack(pady=(5, 10), padx=50, fill=tk.X)
+
+        # Checkboxes
+        chk_confirm = ttk.Checkbutton(
+            opt_frame, text="Confirm before connecting", variable=self.confirm_connect
+        )
+        chk_confirm.pack(side=tk.LEFT, padx=(0, 10))
+
+        chk_add = ttk.Checkbutton(
+            opt_frame, text="Add only (don't connect)", variable=self.add_only
+        )
+        chk_add.pack(side=tk.LEFT)
 
         # Camera Feed Label
         self.camera_label = Label(
@@ -395,7 +424,7 @@ class QRNetworkApp:
             pad_frame, text="QR Network Scanner", font=("Arial", 16, "bold"), bg="white"
         ).pack(pady=(0, 10))
         tk.Label(
-            pad_frame, text="v0.1.0-beta.10", font=("Arial", 10), fg="#666", bg="white"
+            pad_frame, text="v0.1.0-beta.11", font=("Arial", 10), fg="#666", bg="white"
         ).pack()
 
         copyright_text = (
@@ -431,9 +460,145 @@ class QRNetworkApp:
             self.log("Camera started. Ready to scan.")
         except Exception as e:
             self.log(f"Camera Error: {e}")
-            messagebox.showerror("Camera Error", f"Could not start camera: {e}")
+            if (
+                "not found" in str(e).lower()
+                or "authorization" in str(e).lower()
+                or "access" in str(e).lower()
+            ):
+                self.show_permission_help("Camera")
+            else:
+                self.show_error_with_copy(
+                    "Camera Error", f"Could not start camera:\n{e}"
+                )
+
+    def show_error_with_copy(self, title, message):
+        """Shows an error dialog with a 'Copy Debug Info' button."""
+        import platform
+
+        dialog = tk.Toplevel(self.root)
+        dialog.title(title)
+        dialog.geometry("400x300")
+        dialog.config(bg="white")
+
+        # Icon/Title
+        tk.Label(
+            dialog,
+            text="❌ " + title,
+            font=("Arial", 14, "bold"),
+            bg="white",
+            fg="#d32f2f",
+        ).pack(pady=10)
+
+        # Message Area
+        txt_frame = tk.Frame(dialog, bg="white", padx=10)
+        txt_frame.pack(fill=tk.BOTH, expand=True)
+
+        txt = tk.Text(
+            txt_frame,
+            height=5,
+            width=40,
+            font=("Arial", 10),
+            wrap=tk.WORD,
+            borderwidth=0,
+        )
+        txt.insert(tk.END, message)
+        txt.config(state="disabled")  # Read-only
+        txt.pack(fill=tk.BOTH, expand=True)
+
+        # Info to copy
+        debug_info = (
+            f"Error: {title}\n"
+            f"Message: {message}\n"
+            f"App Version: 0.1.0-beta.10\n"
+            f"OS: {platform.system()} {platform.release()}\n"
+            f"Python: {sys.version.split()[0]}"
+        )
+
+        def copy_to_clipboard():
+            self.root.clipboard_clear()
+            self.root.clipboard_append(debug_info)
+            self.root.update()  # Required for clipboard
+            btn_copy.config(text="Copied! ✓")
+
+        btn_frame = tk.Frame(dialog, bg="white", pady=10)
+        btn_frame.pack(fill=tk.X)
+
+        btn_copy = ttk.Button(
+            btn_frame, text="📋 Copy Debug Info", command=copy_to_clipboard
+        )
+        btn_copy.pack(side=tk.LEFT, padx=20)
+
+        ttk.Button(btn_frame, text="Close", command=dialog.destroy).pack(
+            side=tk.RIGHT, padx=20
+        )
+
+    def show_permission_help(self, focus="Camera"):
+        """Shows a helper window to guide user to System Settings."""
+        perm_window = tk.Toplevel(self.root)
+        perm_window.title("⚠️ Permission Required")
+        perm_window.geometry("500x400")
+        perm_window.config(bg="white")
+
+        pad = tk.Frame(perm_window, bg="white", padx=20, pady=20)
+        pad.pack(fill=tk.BOTH, expand=True)
+
+        tk.Label(
+            pad,
+            text=f"{focus} Access Needed",
+            font=("Arial", 16, "bold"),
+            bg="white",
+            fg="#d32f2f",
+        ).pack(pady=(0, 10))
+
+        msg = (
+            f"macOS requires you to explicitly grant access for this app to use the {focus}.\n\n"
+            "1. Click the button below to open System Settings.\n"
+            f"2. Find 'QR Network Scanner' (or Terminal if running via CLI) in the list.\n"
+            "3. Enable the toggle.\n"
+            "4. IMPORTANT: You must restart the app/terminal for changes to take effect."
+        )
+
+        tk.Label(
+            pad,
+            text=msg,
+            bg="white",
+            justify=tk.LEFT,
+            wraplength=450,
+            font=("Arial", 11),
+        ).pack(pady=10)
+
+        # Deep Links
+        def open_settings(url):
+            webbrowser.open(url)
+
+        btn_frame = tk.Frame(pad, bg="white")
+        btn_frame.pack(pady=20)
+
+        if focus == "Camera":
+            tk.Button(
+                btn_frame,
+                text="Open Camera Settings ↗",
+                command=lambda: open_settings(
+                    "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera"
+                ),
+            ).pack(side=tk.LEFT, padx=5)
+
+        # Always show Location/WiFi option too as it's common
+        tk.Button(
+            btn_frame,
+            text="Open Wi-Fi/Location Settings ↗",
+            command=lambda: open_settings(
+                "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices"
+            ),
+        ).pack(side=tk.LEFT, padx=5)
+
+        tk.Button(pad, text="Close", command=perm_window.destroy).pack(side=tk.BOTTOM)
 
     def log(self, message: str):
+        # Redact sensitive info
+        if hasattr(self, "_redactor"):
+            message = self._redactor._redact(message)
+
         try:
             print(f"[GUI LOG] {message}")  # Console debug
         except Exception:
@@ -516,6 +681,7 @@ class QRNetworkApp:
                 self.start_camera_safe()
                 # self.camera_active = True # Moved to start_camera_safe
 
+            self.scan_start_time = time.time()
             self.is_scanning = True
             self.scan_btn.config(text="🛑 Stop Scanning", style="Red.TButton")
             self.log("Scanning started...")
@@ -567,6 +733,38 @@ class QRNetworkApp:
 
                 # Perform Detection if scanning (on main thread)
                 if self.is_scanning:
+                    # Timeout Check
+                    try:
+                        elapsed = time.time() - self.scan_start_time
+                        remaining = int(60 - elapsed)
+                        if remaining <= 0:
+                            self.toggle_scan()
+                            self.log("Scan timed out.")
+                            if messagebox.askretrycancel(
+                                "Scan Timed Out", "No QR code detected.\n\nRetry?"
+                            ):
+                                self.toggle_scan()
+                            return
+                        # Overlay
+                        cv2.putText(
+                            resize_frame,
+                            f"Scanning: {remaining}s",
+                            (10, 30),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.7,
+                            (0, 0, 255),
+                            2,
+                        )
+                        # Re-update label with overlay
+                        img_ov = Image.fromarray(
+                            cv2.cvtColor(resize_frame, cv2.COLOR_BGR2RGB)
+                        )
+                        imgtk_ov = ImageTk.PhotoImage(image=img_ov)
+                        self.camera_label.imgtk = imgtk_ov
+                        self.camera_label.configure(image=imgtk_ov)
+                    except Exception:
+                        pass
+
                     # Detect on the ORIGINAL frame for better resolution/accuracy
                     # This might cause slight UI stutter on slower machines but ensures detection works
                     decoded_text, points = self.scanner.detect_qr(frame)
@@ -600,19 +798,38 @@ class QRNetworkApp:
 
         self.log(f"Network: {ssid} ({security})")
 
+        # Confirm before connect
+        if self.confirm_connect.get():
+            # Show a custom dialog or standard yes/no
+            # We want to show SSID and Security. Password hidden by default in log,
+            # here we can show "Password: *****"
+            msg = f"Network Found:\nSSID: {ssid}\nSecurity: {security}\n\nDo you want to proceed?"
+            if not messagebox.askyesno("Confirm Connection", msg):
+                self.log("User cancelled connection.")
+                return
+
         self.log("Adding network to system settings...")
         success, output = net_mgr.add_network(ssid, password, security)
         if success:
             self.log("Successfully added network.")
         else:
             self.log(f"Failed to add network: {output}")
+            # If add failed, usually connect will fail too, but maybe it exists?
+            # We continue if Add Only is NOT checked, otherwise we stop?
+
+        if self.add_only.get():
+            self.log("Add Only mode enabled. Skipping connection.")
+            messagebox.showinfo(
+                "Network Added", f"Profile for '{ssid}' updated.\nAuto-connect skipped."
+            )
+            return
 
         self.log(f"Connecting to {ssid}...")
         current = net_mgr.get_current_network()
         if current == ssid:
             self.log(f"Already connected to {ssid}.")
         else:
-            success, output = net_mgr.connect_network(ssid, password)
+            success, output = net_mgr.activate_network(ssid, password)
             if success:
                 self.log(f"SUCCESS: Connected to {ssid}!")
                 self.root.after(

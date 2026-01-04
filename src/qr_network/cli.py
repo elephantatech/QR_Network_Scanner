@@ -5,6 +5,17 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from .scanner import QRCodeScanner
 from .network import NetworkManager, WiFiQRParser
+from enum import IntEnum
+
+
+class ExitCode(IntEnum):
+    SUCCESS = 0
+    GENERAL_ERROR = 1
+    CAMERA_ERROR = 10
+    NETWORK_ERROR = 20
+    SCAN_TIMEOUT = 30
+    USER_CANCEL = 40
+
 
 app = typer.Typer()
 console = Console()
@@ -40,92 +51,110 @@ def scan(
     """
 
     # 1. Initialize
-    scanner = QRCodeScanner(camera_id=camera_id)
-    network_mgr = NetworkManager()
-
-    console.print(Panel.fit("QR Network Scanner", style="bold blue"))
-
-    # 2. Scan QR
-    qr_data = None
-
-    if screen:
-        with console.status(
-            "[bold green]Scanning screen(s) for WiFi QR Code...[/bold green]",
-            spinner="dots",
-        ):
-            qr_data = scanner.scan_screen()
-            if not qr_data:
-                console.print("[bold red]No QR code found on any screen.[/bold red]")
-                raise typer.Exit(code=1)
-    else:
-        with console.status(
-            "[bold green]Scanning for WiFi QR Code... (Point camera at QR code)[/bold green]",
-            spinner="dots",
-        ):
-            qr_data = scanner.scan_one(timeout=timeout)
-
-    if not qr_data:
-        console.print("[bold red]Scan timed out or cancelled. Exiting.[/bold red]")
-        raise typer.Exit(code=1)
-
-    if verbose:
-        console.print(f"[dim]Raw QR Data: {qr_data}[/dim]")
-
-    # 3. Parse QR
     try:
-        wifi_info = WiFiQRParser.parse(qr_data)
-        ssid = wifi_info["ssid"]
-        password = wifi_info.get("password", "")
-        security = wifi_info.get("type", "WPA")
+        scanner = QRCodeScanner(camera_id=camera_id)
+        network_mgr = NetworkManager()
 
-        console.print(f"[bold]Found Network:[/bold] [green]{ssid}[/green] ({security})")
+        console.print(Panel.fit("QR Network Scanner", style="bold blue"))
 
-    except ValueError as e:
-        console.print(f"[bold red]Error parsing QR code:[/bold red] {e}")
-        raise typer.Exit(code=1)
+        # 2. Scan QR
+        qr_data = None
 
-    # 4. Add Network
-    if verbose:
-        console.print(f"[dim]Adding network '{ssid}' to preferred list...[/dim]")
+        if screen:
+            with console.status(
+                "[bold green]Scanning screen(s) for WiFi QR Code...[/bold green]",
+                spinner="dots",
+            ):
+                qr_data = scanner.scan_screen()
+                if not qr_data:
+                    console.print(
+                        "[bold red]No QR code found on any screen.[/bold red]"
+                    )
+                    raise typer.Exit(code=ExitCode.CAMERA_ERROR)
+        else:
+            with console.status(
+                "[bold green]Scanning for WiFi QR Code... (Point camera at QR code)[/bold green]",
+                spinner="dots",
+            ):
+                qr_data = scanner.scan_one(timeout=timeout)
 
-    success, output = network_mgr.add_network(ssid, password, security)
-    if success:
-        console.print(f"[green]✓[/green] Added network '{ssid}' to settings.")
-    else:
-        console.print(f"[red]✗[/red] Failed to add network: {output}")
-        # We might continue and try to connect anyway?
+        if not qr_data:
+            console.print("[bold red]Scan timed out or cancelled. Exiting.[/bold red]")
+            raise typer.Exit(code=ExitCode.SCAN_TIMEOUT)
 
-    # 5. Connect
-    console.print(f"[bold]Attempting to connect to '{ssid}'...[/bold]")
+        if verbose:
+            console.print(f"[dim]Raw QR Data: {qr_data}[/dim]")
 
-    # Check if already connected
-    current = network_mgr.get_current_network()
-    if current == ssid:
-        console.print(f"[green]✓[/green] Already connected to '{ssid}'.")
-        raise typer.Exit()
+        # 3. Parse QR
+        try:
+            wifi_info = WiFiQRParser.parse(qr_data)
+            ssid = wifi_info["ssid"]
+            password = wifi_info.get("password", "")
+            security = wifi_info.get("type", "WPA")
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        transient=True,
-    ) as progress:
-        progress.add_task(description="Connecting...", total=None)
-        success, output = network_mgr.connect_network(ssid, password)
-
-    if success:
-        console.print(
-            Panel.fit(
-                f"[bold green]Successfully connected to {ssid}![/bold green]",
-                style="green",
-            )
-        )
-    else:
-        console.print(f"[bold red]Failed to connect:[/bold red] {output}")
-        if "Error" in output:
             console.print(
-                "[yellow]Note: You might need to check your password or signal strength.[/yellow]"
+                f"[bold]Found Network:[/bold] [green]{ssid}[/green] ({security})"
             )
-        raise typer.Exit(code=1)
+
+        except ValueError as e:
+            console.print(f"[bold red]Error parsing QR code:[/bold red] {e}")
+            raise typer.Exit(code=ExitCode.GENERAL_ERROR)
+
+        # 4. Add Network
+        if verbose:
+            console.print(f"[dim]Adding network '{ssid}' to preferred list...[/dim]")
+
+        success, output = network_mgr.add_network(ssid, password, security)
+        if success:
+            console.print(f"[green]✓[/green] Added network '{ssid}' to settings.")
+        else:
+            console.print(f"[red]✗[/red] Failed to add network: {output}")
+            # We might continue and try to connect anyway?
+
+        # 5. Connect
+        console.print(f"[bold]Attempting to connect to '{ssid}'...[/bold]")
+
+        # Check if already connected
+        current = network_mgr.get_current_network()
+        if current == ssid:
+            console.print(f"[green]✓[/green] Already connected to '{ssid}'.")
+            raise typer.Exit(code=ExitCode.SUCCESS)
+
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            transient=True,
+        ) as progress:
+            progress.add_task(description="Connecting...", total=None)
+            success, output = network_mgr.activate_network(ssid, password)
+
+        if success:
+            console.print(
+                Panel.fit(
+                    f"[bold green]Successfully connected to {ssid}![/bold green]",
+                    style="green",
+                )
+            )
+        else:
+            console.print(f"[bold red]Failed to connect:[/bold red] {output}")
+            if "Error" in output:
+                console.print(
+                    "[yellow]Note: You might need to check your password or signal strength.[/yellow]"
+                )
+            raise typer.Exit(code=ExitCode.NETWORK_ERROR)
+
+    except KeyboardInterrupt:
+        console.print("\n[bold yellow]Scan cancelled by user.[/bold yellow]")
+        raise typer.Exit(code=ExitCode.USER_CANCEL)
+    except typer.Exit:
+        raise
+    except Exception as e:
+        console.print(f"[bold red]Unexpected Error:[/bold red] {e}")
+        if verbose:
+            import traceback
+
+            traceback.print_exc()
+        raise typer.Exit(code=ExitCode.GENERAL_ERROR)
 
 
 if __name__ == "__main__":

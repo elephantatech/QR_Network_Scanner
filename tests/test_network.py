@@ -46,7 +46,7 @@ def test_connect_network(mock_sys, mock_run):
     nm = NetworkManager()
     mock_run.return_value = MagicMock(returncode=0, stdout="Success")
 
-    success, output = nm.connect_network("MySSID", "pass")
+    success, output = nm.activate_network("MySSID", "pass")
     assert success is True
     cmd = mock_run.call_args[0][0]
     assert cmd == ["networksetup", "-setairportnetwork", "en0", "MySSID", "pass"]
