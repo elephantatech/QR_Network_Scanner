@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, Label, scrolledtext
+from tkinter import messagebox
+import customtkinter as ctk
 import webbrowser
 import os
 import sys
@@ -11,25 +12,36 @@ from PIL import Image, ImageTk
 from ..capture.scanner import QRCodeScanner
 from ..net.manager import NetworkManager
 from ..qr.parser import WiFiQRParser
-from ..utils import RedactedLogger, get_camera_names
+from ..utils import RedactedLogger
+
+# Components
+from .components.dialogs import DialogManager
+from .components.status_panel import StatusPanel
+from .components.control_panel import ControlPanel
+from .components.security_sheet import SecurityConfirmationSheet
 
 
 def resource_path(relative_path):
     """Get absolute path to resource, works for dev and for PyInstaller"""
     try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
-
     return os.path.join(base_path, relative_path)
 
 
-class QRNetworkApp:
-    def __init__(self, root, debug=False):
-        self.root = root
-        self.root.title("QR Network Scanner")
-        self.root.geometry("800x700")
+class QRNetworkApp(ctk.CTk):
+    def __init__(self, debug=False):
+        super().__init__()
+
+        # System Theme Setup
+        ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
+        ctk.set_default_color_theme(
+            "blue"
+        )  # Themes: "blue" (standard), "green", "dark-blue"
+
+        self.title("QR Network Scanner")
+        self.geometry("850x750")
         self.debug = debug
 
         # Determine log file path
@@ -54,127 +66,104 @@ class QRNetworkApp:
             # Use PIL for better format support
             icon_pil = Image.open(icon_path)
             icon_img = ImageTk.PhotoImage(icon_pil)
-            self.root.iconphoto(False, icon_img)
+            self.wm_iconphoto(False, icon_img)
+            self.icon_img = icon_img  # Keep ref
         except Exception as e:
             print(f"Warning: Could not load icon: {e}")
 
-        # --- Tabs Layout ---
-        # --- Theme & Styles ---
-        self.style = ttk.Style()
-        try:
-            self.style.theme_use(
-                "clam"
-            )  # Use 'clam' for better color customization support
-        except Exception:
-            pass
-
-        # Configure Colors & Fonts (Material-like)
-        self.style.configure(".", background="white", font=("Helvetica", 12))
-        self.style.configure("TFrame", background="white")
-        self.style.configure("TNotebook", background="white", tabposition="n")
-        self.style.configure(
-            "TNotebook.Tab",
-            font=("Helvetica", 12, "bold"),
-            padding=[15, 8],
-            background="#f0f0f0",
-        )
-        self.style.map(
-            "TNotebook.Tab",
-            background=[("selected", "#007AFF")],
-            foreground=[("selected", "white")],
-        )
-
-        # Configure Green Button Style
-        self.style.configure(
-            "Green.TButton",
-            background="#28a745",
-            foreground="white",
-            font=("Helvetica", 15, "bold"),
-            borderwidth=0,
-            focuscolor="none",
-            padding=[10, 10],
-        )  # Padding handles the size
-        self.style.map(
-            "Green.TButton",
-            background=[("active", "#218838"), ("pressed", "#1e7e34")],
-            foreground=[("active", "white"), ("pressed", "white")],
-        )
-
-        # Configure Red Button Style (for Stop)
-        self.style.configure(
-            "Red.TButton",
-            background="#d32f2f",
-            foreground="white",
-            font=("Helvetica", 15, "bold"),
-            borderwidth=0,
-            focuscolor="none",
-            padding=[10, 10],
-        )
-        self.style.map(
-            "Red.TButton",
-            background=[("active", "#b71c1c"), ("pressed", "#c62828")],
-            foreground=[("active", "white"), ("pressed", "white")],
-        )
-
-        self.notebook = ttk.Notebook(root)
-        self.notebook.pack(expand=True, fill="both")
-
-        # 1. Scanner Tab
-        self.scanner_frame = tk.Frame(self.notebook, bg="#f0f0f0")
-        self.notebook.add(self.scanner_frame, text="  📷 Scanner  ")
-
-        # 2. Help Tab
-        self.help_frame = tk.Frame(self.notebook, bg="white")
-        self.notebook.add(self.help_frame, text="  ❓ Help & FAQ  ")
-
-        # Security Options
-        self.confirm_connect = tk.BooleanVar(value=False)
-        self.add_only = tk.BooleanVar(value=False)
-
-        # Initialize Redactor
+        # Initialize Redactor and Managers
         self._redactor = RedactedLogger(None)
+        self.dialog_manager = DialogManager(self)
+        self.network_mgr = NetworkManager()  # Initialize early
 
-        self.setup_scanner_ui()
-        self.setup_help_ui()
-
+        # State
         self.scanner = QRCodeScanner()
         self.is_scanning = False
-        self.camera_active = False  # Start with camera off
-        self.is_paused = False  # New flag for focus tracking
+        self.camera_active = False
+        self.is_paused = False
 
-        # Delay camera start to ensure UI is ready (Disabled auto-start)
-        # self.root.after(500, self.start_camera_safe)
-
+        self.setup_layout()
         self.create_native_menu()
 
-        # Bind Focus Events for pausing camera
-        self.root.bind("<FocusIn>", self.on_focus_in)
-        self.root.bind("<FocusOut>", self.on_focus_out)
+        # Bind Focus Events
+        self.bind("<FocusIn>", self.on_focus_in)
+        self.bind("<FocusOut>", self.on_focus_out)
+
+    def setup_layout(self):
+        # Using CTkTabview instead of Notebook
+        self.tabview = ctk.CTkTabview(self)
+        self.tabview.pack(fill="both", expand=True, padx=20, pady=20)
+
+        # 1. Scanner Tab
+        self.tabview.add("  📷 Scanner  ")
+        self.scanner_frame = self.tabview.tab("  📷 Scanner  ")
+
+        # 2. Help Tab
+        self.tabview.add("  ❓ Help & FAQ  ")
+        self.help_frame = self.tabview.tab("  ❓ Help & FAQ  ")
+
+        # Init Components inside frames (Pass self.scanner_frame as master)
+        # Note: Components need to be updated to accept CTkFrame as master
+        self.control_panel = ControlPanel(self.scanner_frame, self)
+
+        # Access exposed vars
+        self.confirm_connect = self.control_panel.confirm_connect
+        self.add_only = self.control_panel.add_only
+
+        self.status_panel = StatusPanel(self.scanner_frame)
+        self.status_label = self.status_panel.status_label
+
+        self.setup_help_ui()
+
+    def log(self, message):
+        timestamp = time.strftime("%H:%M:%S")
+        redacted_msg = self._redactor.redact(message)
+
+        if self.debug:
+            print(f"[{timestamp}] {redacted_msg}")
+            if self.log_file:
+                try:
+                    with open(self.log_file, "a") as f:
+                        f.write(f"[{timestamp}] {redacted_msg}\n")
+                except Exception:
+                    pass
+
+        # Update UI Log via component
+        if hasattr(self, "status_panel"):
+            self.status_panel.log(f"[{timestamp}] {redacted_msg}")
 
     def on_focus_in(self, event):
-        # Only handle root window focus events to avoid child widget noise
-        if event.widget == self.root:
+        if event.widget == self:
             self.is_paused = False
-            # self.log("App Focused - Resuming Camera")
 
     def on_focus_out(self, event):
-        if event.widget == self.root:
+        if event.widget == self:
             self.is_paused = True
-            # self.log("App Lost Focus - Pausing Camera")
 
     def create_native_menu(self):
-        """Create native macOS menu bar"""
-        menubar = tk.Menu(self.root)
-
-        # 'Apple' Menu (Application Name Menu)
-        # On macOS, the first menu added is the 'Application' menu
+        # CTk doesn't have a native menu replacement, so we use standard tk.Menu attached to root
+        # Since self is CTk (which inherits from Tk), this works fine.
+        menubar = tk.Menu(self)
         app_menu = tk.Menu(menubar, name="apple")
         menubar.add_cascade(menu=app_menu)
-
-        app_menu.add_command(label="About QR Network Scanner", command=self.show_about)
+        app_menu.add_command(
+            label="About QR Network Scanner", command=self.dialog_manager.show_about
+        )
+        app_menu.add_separator()
+        # Theme toggle is now built-in to system sync, but we can offer manual override
+        theme_menu = tk.Menu(menubar, tearoff=0)
+        app_menu.add_cascade(label="Appearance", menu=theme_menu)
+        theme_menu.add_command(
+            label="System", command=lambda: ctk.set_appearance_mode("System")
+        )
+        theme_menu.add_command(
+            label="Dark", command=lambda: ctk.set_appearance_mode("Dark")
+        )
+        theme_menu.add_command(
+            label="Light", command=lambda: ctk.set_appearance_mode("Light")
+        )
         app_menu.add_separator()
 
-        # 'Help ' Menu (Extra space to avoid macOS Search Bar injection)
         help_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Help ", menu=help_menu)
         help_menu.add_command(
@@ -194,287 +183,19 @@ class QRNetworkApp:
         help_menu.add_separator()
         help_menu.add_command(
             label="Check Permissions...",
-            command=lambda: self.show_permission_help("General"),
+            command=lambda: self.dialog_manager.show_permission_help("General"),
         )
         help_menu.add_separator()
         help_menu.add_command(
-            label="Copy CLI Alias",
-            command=self.copy_alias_to_clipboard,
+            label="Copy CLI Alias", command=self.dialog_manager.show_cli_alias_help
         )
         help_menu.add_command(
-            label="Install Alias to ~/.zshrc",
-            command=self.install_alias_to_zshrc,
+            label="Install Alias to ~/.zshrc", command=self.install_alias_to_zshrc
         )
 
-        self.root.config(menu=menubar)
-
-    def setup_scanner_ui(self):
-        # Scan Button
-        # Using ttk.Button with custom 'Green.TButton' style for solid color support on macOS ('clam' theme)
-        # Buttons Frame
-        btn_frame = tk.Frame(self.scanner_frame, bg="#f0f0f0")
-        btn_frame.pack(pady=20, fill=tk.X, padx=50)
-
-        # Camera Scan Button
-        self.scan_btn = ttk.Button(
-            btn_frame,
-            text="📷 Scan Camera",
-            command=self.toggle_scan,
-            style="Green.TButton",
-            cursor="hand2",
-        )
-        self.scan_btn.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 5))
-
-        # Screen Scan Button
-        self.screen_scan_btn = ttk.Button(
-            btn_frame,
-            text="🖥️ Scan Screen",
-            command=self.scan_from_screen,
-            style="Green.TButton",
-            cursor="hand2",
-        )
-        self.screen_scan_btn.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(5, 0))
-
-        # Scan Options Frame (Renamed from Security Options which was implicit)
-        opt_frame = tk.LabelFrame(self.scanner_frame, text="Scan Options", bg="#f0f0f0")
-        opt_frame.pack(pady=(5, 10), padx=50, fill=tk.X)
-
-        # Row 1: Camera & Timeout
-        row1 = tk.Frame(opt_frame, bg="#f0f0f0")
-        row1.pack(fill=tk.X, padx=10, pady=5)
-
-        tk.Label(row1, text="Camera:", bg="#f0f0f0").pack(side=tk.LEFT)
-
-        # Fetch actual camera names if possible (macOS)
-
-        camera_names = get_camera_names()
-
-        self.camera_idx_var = tk.StringVar(value=camera_names[0])
-
-        cam_combo = ttk.Combobox(
-            row1,
-            textvariable=self.camera_idx_var,
-            values=camera_names,
-            state="readonly",
-            width=20,
-        )
-        cam_combo.pack(side=tk.LEFT, padx=(5, 15))
-        # Keep map of name -> index
-        self.camera_map = {name: i for i, name in enumerate(camera_names)}
-
-        tk.Label(row1, text="Timeout (s):", bg="#f0f0f0").pack(side=tk.LEFT)
-        self.timeout_var = tk.IntVar(value=60)
-        timeout_spin = tk.Spinbox(
-            row1, from_=5, to=300, textvariable=self.timeout_var, width=4
-        )
-        timeout_spin.pack(side=tk.LEFT, padx=(5, 0))
-
-        # Row 2: Checkboxes
-        row2 = tk.Frame(opt_frame, bg="#f0f0f0")
-        row2.pack(fill=tk.X, padx=10, pady=5)
-
-        # Checkboxes
-        chk_confirm = ttk.Checkbutton(
-            row2, text="Confirm before connecting", variable=self.confirm_connect
-        )
-        chk_confirm.pack(side=tk.LEFT, padx=(0, 10))
-
-        chk_add = ttk.Checkbutton(
-            row2, text="Add only (don't connect)", variable=self.add_only
-        )
-        chk_add.pack(side=tk.LEFT)
-
-        # Camera Feed Label
-        self.camera_label = Label(
-            self.scanner_frame,
-            bg="black",
-            text="Camera is Off\nClick 'Scan Camera' to start",
-            fg="white",
-        )
-        self.camera_label.pack(pady=5, padx=10, expand=True, fill=tk.BOTH)
-
-        # Log Area
-        log_frame = tk.LabelFrame(
-            self.scanner_frame,
-            text="Activity Log",
-            bg="#f0f0f0",
-            font=("Arial", 10, "bold"),
-        )
-        log_frame.pack(pady=10, padx=20, fill=tk.BOTH, expand=True)
-
-        self.log_area = scrolledtext.ScrolledText(log_frame, state="disabled", height=8)
-        self.log_area.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
-    def setup_help_ui(self):
-        import webbrowser
-
-        # --- Toolbar Frame ---
-        toolbar = tk.Frame(self.help_frame, bg="white", pady=10)
-        toolbar.pack(fill=tk.X, padx=20)
-
-        # External Links
-        btn_github = tk.Button(
-            toolbar,
-            text="🐛 Report Bug",
-            command=lambda: webbrowser.open(
-                "https://github.com/elephantatech/QR_Network_Scanner/issues"
-            ),
-            bg="#ffdddd",
-        )
-        btn_github.pack(side=tk.RIGHT, padx=5)
-
-        btn_online = tk.Button(
-            toolbar,
-            text="🌎 Online Docs",
-            command=lambda: webbrowser.open(
-                "https://github.com/elephantatech/QR_Network_Scanner/blob/main/HELP.md"
-            ),
-        )
-        btn_online.pack(side=tk.RIGHT, padx=5)
-
-        btn_html = tk.Button(
-            toolbar, text="📄 Offline Guide", command=self.open_html_help
-        )
-        btn_html.pack(side=tk.RIGHT, padx=5)
-
-        btn_about = tk.Button(toolbar, text="ℹ️ About", command=self.show_about)
-        btn_about.pack(side=tk.RIGHT, padx=5)
-
-        btn_cli = tk.Button(
-            toolbar, text="💻 CLI Setup", command=self.show_cli_alias_help, bg="#e3f2fd"
-        )
-        btn_cli.pack(side=tk.RIGHT, padx=5)
-
-        # --- Help Text Area ---
-        self.help_text = scrolledtext.ScrolledText(
-            self.help_frame, wrap=tk.WORD, font=("Segoe UI", 11), padx=20, pady=20, bd=0
-        )
-        self.help_text.pack(fill=tk.BOTH, expand=True)
-
-        # Configure Tags for Styling
-        self.help_text.tag_config(
-            "h1", font=("Segoe UI", 22, "bold"), foreground="#007AFF", spacing3=15
-        )
-        self.help_text.tag_config(
-            "h2",
-            font=("Segoe UI", 16, "bold"),
-            foreground="#333333",
-            spacing1=20,
-            spacing3=10,
-        )
-        self.help_text.tag_config(
-            "q", font=("Segoe UI", 12, "bold"), foreground="#d63031", spacing1=10
-        )
-        self.help_text.tag_config(
-            "a",
-            font=("Segoe UI", 11),
-            foreground="#2d3436",
-            spacing3=15,
-            lmargin1=20,
-            lmargin2=20,
-        )
-        self.help_text.tag_config(
-            "step",
-            font=("Segoe UI", 11),
-            foreground="#2d3436",
-            lmargin1=20,
-            lmargin2=20,
-        )
-        self.help_text.tag_config("li", lmargin1=30, lmargin2=30)
-        self.help_text.tag_config("highlight", background="yellow", foreground="black")
-
-        # Insert Content
-        self.help_text.insert(tk.END, "QR Network Scanner Guide\n", "h1")
-
-        self.help_text.insert(tk.END, "How to Use\n", "h2")
-        self.help_text.insert(
-            tk.END,
-            "1. (Optional) Toggle 'Confirm before connecting' or 'Add only'.\n",
-            "step",
-        )
-        self.help_text.insert(
-            tk.END, "2. Click 'Start Scanning' or 'Scan Screen'.\n", "step"
-        )
-        self.help_text.insert(
-            tk.END,
-            "3. Point camera at code OR ensure QR is visible on screen.\n",
-            "step",
-        )
-        self.help_text.insert(
-            tk.END,
-            "4. The app will auto-connect or save based on your settings.\n",
-            "step",
-        )
-
-        self.help_text.insert(tk.END, "CLI Mode (Terminal)\n", "h2")
-        self.help_text.insert(tk.END, "Run from Installed App:\n", "step")
-        self.help_text.insert(
-            tk.END,
-            "• /Applications/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan --help\n",
-            "li",
-        )
-
-        self.help_text.insert(tk.END, "Command Options:\n", "step")
-        self.help_text.insert(
-            tk.END,
-            "• list-cameras: Show available cameras and IDs.\n"
-            "• --camera <ID>: Select a specific camera.\n"
-            "• --timeout <SEC>: Stop scan after N seconds.\n"
-            "• --screen: Scan from screen.\n"
-            "• --verbose (-v): Enable debug logs.\n",
-            "li",
-        )
-
-        self.help_text.insert(tk.END, "Run from Source (Dev):\n", "step")
-        self.help_text.insert(tk.END, "• uv run qr-network scan\n", "li")
-
-        self.help_text.insert(tk.END, "UI Options Explained\n", "h2")
-        self.help_text.insert(tk.END, "• Confirm before connecting:\n", "step")
-        self.help_text.insert(
-            tk.END,
-            "  Shows a dialog with Network Name (SSID) and Security Type before initiating connection.\n",
-            "li",
-        )
-        self.help_text.insert(tk.END, "• Add to settings only:\n", "step")
-        self.help_text.insert(
-            tk.END,
-            "  Saves the network profile to System Settings so you can connect manually later, but does not switch your WiFi immediately.\n",
-            "li",
-        )
-
-        self.help_text.insert(tk.END, "Security & Privacy\n", "h2")
-        self.help_text.insert(tk.END, "• Credentials stored in macOS Keychain.\n", "li")
-        self.help_text.insert(tk.END, "• Logs are redacted (no passwords).\n", "li")
-        self.help_text.insert(tk.END, "• Source code is open for review.\n", "li")
-
-        self.help_text.insert(tk.END, "Frequently Asked Questions (FAQ)\n", "h2")
-
-        self.help_text.insert(tk.END, "Q: Camera shows 'Could not open camera'\n", "q")
-        self.help_text.insert(tk.END, "A: This is a macOS permission issue.\n", "a")
-        self.help_text.insert(
-            tk.END, "• Click 'Check Permissions' in Help menu.\n", "li"
-        )
-        self.help_text.insert(tk.END, "• Restart app after granting access.\n", "li")
-
-        self.help_text.insert(tk.END, "Q: It's scanning but not detecting?\n", "q")
-        self.help_text.insert(
-            tk.END,
-            "A: Ensure good lighting. Moving closer/further helps. Timeout is 60s.\n",
-            "a",
-        )
-
-        self.help_text.insert(tk.END, "Q: What happens if I can't connect?\n", "q")
-        self.help_text.insert(
-            tk.END,
-            "A: The app adds the network to macOS Settings. You can also try clicking the WiFi icon in your menu bar to select it manually if the auto-switch fails.\n",
-            "a",
-        )
-
-        self.help_text.config(state="disabled")
+        self.config(menu=menubar)
 
     def open_html_help(self):
-        import webbrowser
-
         try:
             path = resource_path("assets/help.html")
             url = "file://" + path
@@ -482,84 +203,118 @@ class QRNetworkApp:
         except Exception as e:
             messagebox.showerror("Error", f"Could not open help file: {e}")
 
-    def show_about(self):
-        # Pause camera updates
-        was_active = self.camera_active
-        self.camera_active = False
+    def setup_help_ui(self):
+        # Toolbar
+        toolbar = ctk.CTkFrame(self.help_frame, fg_color="transparent")
+        toolbar.pack(fill="x", padx=10, pady=10)
 
-        # Create Custom Window (Non-blocking Toplevel)
-        about_window = tk.Toplevel(self.root)
-        about_window.title("About")
-        about_window.geometry("400x350")
-        about_window.resizable(False, False)
-        about_window.configure(bg="white")
+        def mk_btn(txt, cmd):
+            b = ctk.CTkButton(
+                toolbar, text=txt, command=cmd, height=32, font=("Arial", 12)
+            )
+            b.pack(side="right", padx=5)
+            return b
 
-        # Make it modal-like (transient) but without blocking the main loop aggressively
-        about_window.transient(self.root)
-
-        # Content
-        pad_frame = tk.Frame(about_window, bg="white", padx=20, pady=20)
-        pad_frame.pack(fill=tk.BOTH, expand=True)
-
-        # Icon
-        try:
-            icon_path = resource_path("assets/icon.png")
-            icon_img = Image.open(icon_path)
-            icon_img = icon_img.resize((64, 64), Image.Resampling.LANCZOS)
-            icon_tk = ImageTk.PhotoImage(icon_img)
-            icon_label = tk.Label(pad_frame, image=icon_tk, bg="white")
-            icon_label.image = icon_tk  # Keep ref
-            icon_label.pack(pady=(0, 10))
-        except Exception:
-            pass
-
-        tk.Label(
-            pad_frame, text="QR Network Scanner", font=("Arial", 16, "bold"), bg="white"
-        ).pack(pady=(0, 10))
-        tk.Label(
-            pad_frame, text="v0.1.0-beta.17", font=("Arial", 10), fg="#666", bg="white"
-        ).pack()
-
-        copyright_text = (
-            "Copyright © 2026\nElephanta Technologies and Design Inc\n\n"
-            "Developed by elephantatech"
+        mk_btn(
+            "🐛 Report Bug",
+            lambda: webbrowser.open(
+                "https://github.com/elephantatech/QR_Network_Scanner/issues"
+            ),
         )
-        tk.Label(pad_frame, text=copyright_text, bg="white", justify=tk.CENTER).pack(
-            pady=20
+        mk_btn(
+            "🌎 Online Docs",
+            lambda: webbrowser.open(
+                "https://github.com/elephantatech/QR_Network_Scanner/blob/main/HELP.md"
+            ),
         )
+        mk_btn("📄 Offline Guide", self.open_html_help)
+        mk_btn("ℹ️ About", self.dialog_manager.show_about)
+        mk_btn("💻 CLI Setup", self.dialog_manager.show_cli_alias_help)
 
-        license_info = "Licensed under Apache License 2.0"
-        tk.Label(
-            pad_frame, text=license_info, bg="white", fg="#007AFF", cursor="hand2"
-        ).pack()
+        # Appearance Menu Option
+        appearance_menu = ctk.CTkOptionMenu(
+            toolbar,
+            values=["System", "Dark", "Light"],
+            command=lambda v: ctk.set_appearance_mode(v),
+            width=100,
+        )
+        appearance_menu.set("System")
+        appearance_menu.pack(side="right", padx=5)
 
-        # Close Handler
-        def close_about():
-            about_window.destroy()
-            if was_active:
-                self.camera_active = True
-                self.update_camera_feed()
+        # Help Text - Using CTkTextbox
+        self.help_text = ctk.CTkTextbox(
+            self.help_frame, wrap="word", font=("Segoe UI", 13)
+        )
+        self.help_text.pack(fill="both", expand=True, padx=20, pady=(0, 20))
 
-        tk.Button(pad_frame, text="Close", command=close_about, width=10).pack(pady=30)
+        # Insert Content (Formatting is simpler in Textbox, limited tags support in CTkTextbox compared to tk.Text but works well for plain text)
+        # Note: CTkTextbox doesn't support advanced tagging like tk.Text fully yet in the same way, but let's try basic insert.
 
-        # Handle "X" button click
-        about_window.protocol("WM_DELETE_WINDOW", close_about)
+        content = """QR Network Scanner Guide
+
+How to Use
+1. (Optional) Toggle 'Confirm before connecting' or 'Add only' in the toolbar.
+2. Click 'Scan Camera' or 'Scan Screen'.
+3. Point camera at code OR ensure QR is visible on screen.
+4. The app will auto-connect or save based on your settings.
+
+CLI Mode (Terminal)
+Run from Installed App:
+• /Applications/QRNetworkScanner.app/Contents/MacOS/QRNetworkScanner scan --help
+
+Command Options:
+• list-cameras: Show available cameras and IDs.
+• --camera <ID>: Select a specific camera.
+• --timeout <SEC>: Stop scan after N seconds.
+• --screen: Scan from screen.
+• --verbose (-v): Enable debug logs.
+
+Run from Source (Dev):
+• uv run qr-network scan
+
+UI Options Explained
+• Confirm before connecting: Shows a dialog with Network Name (SSID) and Security Type before initiating connection.
+• Add to settings only: Saves the network profile to System Settings so you can connect manually later.
+
+Security & Privacy
+• Credentials stored in macOS Keychain.
+• Logs are redacted (no passwords).
+• Source code is open for review.
+
+Frequently Asked Questions (FAQ)
+Q: Camera shows 'Could not open camera'
+A: This is a macOS permission issue. Click 'Check Permissions' in Help menu.
+
+Q: It's scanning but not detecting?
+A: Ensure good lighting. Moving closer/further helps. Timeout is 60s.
+
+Q: What happens if I can't connect?
+A: The app adds the network to macOS Settings. Click the WiFi icon in your menu bar to select it manually.
+"""
+        self.help_text.insert("0.0", content)
+        self.help_text.configure(state="disabled")
 
     def start_camera_safe(self):
         try:
-            # Get index from name
-            selected_name = self.camera_idx_var.get()
-            idx = self.camera_map.get(selected_name, 0)
+            # Get index from control panel
+            idx = self.control_panel.get_selected_camera_index()
 
             # If changed/first time
             if self.scanner.camera_id != idx:
-                self.scanner.stop_camera()  # Stop old
+                self.scanner.stop_camera()
                 self.scanner = QRCodeScanner(camera_id=idx)
 
             self.scanner.start_camera()
             self.camera_active = True
+            self.is_scanning = True  # Enable QR detection when camera starts
+            self.scan_start_time = time.time()  # Start timeout counter
             self.update_camera_feed()
             self.log("Camera started. Ready to scan.")
+
+            # Update button state
+            self.control_panel.set_scanning_state(True)
+            self.control_panel.screen_scan_btn.configure(state="disabled")
+
         except Exception as e:
             self.log(f"Camera Error: {e}")
             if (
@@ -567,473 +322,223 @@ class QRNetworkApp:
                 or "authorization" in str(e).lower()
                 or "access" in str(e).lower()
             ):
-                self.show_permission_help("Camera")
+                self.dialog_manager.show_permission_help("Camera")
             else:
-                self.show_error_with_copy(
+                self.dialog_manager.show_error_with_copy(
                     "Camera Error", f"Could not start camera:\n{e}"
                 )
 
-    def install_alias_to_zshrc(self):
-        """Installs the CLI alias to ~/.zshrc"""
-        try:
-            zshrc_path = os.path.expanduser("~/.zshrc")
-            # Check if already exists
-            if os.path.exists(zshrc_path):
-                with open(zshrc_path, "r") as f:
-                    content = f.read()
-                    if self.alias_cmd in content:
-                        messagebox.showinfo("Info", "Alias already exists in ~/.zshrc")
-                        return
-
-            with open(zshrc_path, "a") as f:
-                f.write(f"\n# QR Network Scanner Alias\n{self.alias_cmd}\n")
-
-            messagebox.showinfo(
-                "Success", f"Alias added to {zshrc_path}\nPlease restart your terminal."
-            )
-        except Exception as e:
-            messagebox.showerror("Error", f"Could not write to .zshrc:\n{e}")
-
-    def copy_alias_to_clipboard(self):
-        """Copies the CLI alias to clipboard"""
-        self.root.clipboard_clear()
-        self.root.clipboard_append(self.alias_cmd)
-        self.root.update()
-        messagebox.showinfo("Copied", "Alias command copied to clipboard!")
-
-    def show_cli_alias_help(self):
-        """Shows a dialog with CLI alias instructions."""
-        dialog = tk.Toplevel(self.root)
-        dialog.title("CLI Setup")
-        dialog.geometry("500x350")
-        dialog.config(bg="white")
-
-        pad = tk.Frame(dialog, bg="white", padx=20, pady=20)
-        pad.pack(fill=tk.BOTH, expand=True)
-
-        tk.Label(
-            pad,
-            text="Run from Terminal",
-            font=("Arial", 14, "bold"),
-            bg="white",
-            fg="#007AFF",
-        ).pack(pady=(0, 10))
-
-        tk.Label(
-            pad,
-            text="To run this app from your terminal using 'qr-network', paste this alias into your shell config (e.g., ~/.zshrc):",
-            bg="white",
-            justify=tk.LEFT,
-            wraplength=450,
-        ).pack(anchor=tk.W)
-
-        # Alias Command
-        cmd_frame = tk.Frame(
-            pad, bg="#f5f5f5", padx=10, pady=10, relief=tk.SUNKEN, bd=1
-        )
-        cmd_frame.pack(fill=tk.X, pady=10)
-
-        lbl_cmd = tk.Label(
-            cmd_frame,
-            text=self.alias_cmd,
-            bg="#f5f5f5",
-            fg="#333",
-            font=("Courier", 11),
-            wraplength=430,
-            justify=tk.LEFT,
-        )
-        lbl_cmd.pack(fill=tk.X)
-
-        # Copy Button (Use simplified local wrapper to update button text instead of generic popup)
-        def copy_cmd_local():
-            self.root.clipboard_clear()
-            self.root.clipboard_append(self.alias_cmd)
-            self.root.update()
-            btn_copy.config(text="Copied! ✓")
-
-        btn_copy = ttk.Button(pad, text="📋 Copy Alias", command=copy_cmd_local)
-        btn_copy.pack(pady=5)
-
-        # Auto-install Button
-        btn_install = ttk.Button(
-            pad, text="⚡ Install to ~/.zshrc", command=self.install_alias_to_zshrc
-        )
-        btn_install.pack(pady=5)
-
-        tk.Label(
-            pad,
-            text="After adding, restart terminal and run:\n  qr-network scan",
-            bg="white",
-            justify=tk.CENTER,
-            fg="#666",
-        ).pack(pady=10)
-
-        tk.Button(pad, text="Close", command=dialog.destroy).pack(side=tk.BOTTOM)
-
-    def show_error_with_copy(self, title, message):
-        """Shows an error dialog with a 'Copy Debug Info' button."""
-        import platform
-
-        dialog = tk.Toplevel(self.root)
-        dialog.title(title)
-        dialog.geometry("400x300")
-        dialog.config(bg="white")
-
-        # Icon/Title
-        tk.Label(
-            dialog,
-            text="❌ " + title,
-            font=("Arial", 14, "bold"),
-            bg="white",
-            fg="#d32f2f",
-        ).pack(pady=10)
-
-        # Message Area
-        txt_frame = tk.Frame(dialog, bg="white", padx=10)
-        txt_frame.pack(fill=tk.BOTH, expand=True)
-
-        txt = tk.Text(
-            txt_frame,
-            height=5,
-            width=40,
-            font=("Arial", 10),
-            wrap=tk.WORD,
-            borderwidth=0,
-        )
-        txt.insert(tk.END, message)
-        txt.config(state="disabled")  # Read-only
-        txt.pack(fill=tk.BOTH, expand=True)
-
-        # Info to copy
-        debug_info = (
-            f"Error: {title}\n"
-            f"Message: {message}\n"
-            f"App Version: 0.1.0-beta.10\n"
-            f"OS: {platform.system()} {platform.release()}\n"
-            f"Python: {sys.version.split()[0]}"
-        )
-
-        def copy_to_clipboard():
-            self.root.clipboard_clear()
-            self.root.clipboard_append(debug_info)
-            self.root.update()  # Required for clipboard
-            btn_copy.config(text="Copied! ✓")
-
-        btn_frame = tk.Frame(dialog, bg="white", pady=10)
-        btn_frame.pack(fill=tk.X)
-
-        btn_copy = ttk.Button(
-            btn_frame, text="📋 Copy Debug Info", command=copy_to_clipboard
-        )
-        btn_copy.pack(side=tk.LEFT, padx=20)
-
-        ttk.Button(btn_frame, text="Close", command=dialog.destroy).pack(
-            side=tk.RIGHT, padx=20
-        )
-
-    def show_permission_help(self, focus="Camera"):
-        """Shows a helper window to guide user to System Settings."""
-        perm_window = tk.Toplevel(self.root)
-        perm_window.title("⚠️ Permission Required")
-        perm_window.geometry("500x400")
-        perm_window.config(bg="white")
-
-        pad = tk.Frame(perm_window, bg="white", padx=20, pady=20)
-        pad.pack(fill=tk.BOTH, expand=True)
-
-        # Icon
-        try:
-            icon_path = resource_path("assets/icon.png")
-            icon_img = Image.open(icon_path)
-            icon_img = icon_img.resize((64, 64), Image.Resampling.LANCZOS)
-            icon_tk = ImageTk.PhotoImage(icon_img)
-            icon_label = tk.Label(pad, image=icon_tk, bg="white")
-            icon_label.image = icon_tk  # Keep ref
-            icon_label.pack(pady=(0, 10))
-        except Exception:
-            pass
-
-        tk.Label(
-            pad,
-            text=f"{focus} Access Needed",
-            font=("Arial", 16, "bold"),
-            bg="white",
-            fg="#d32f2f",
-        ).pack(pady=(0, 10))
-
-        msg = (
-            f"macOS requires you to explicitly grant access for this app to use the {focus}.\n\n"
-            "1. Click the button below to open System Settings.\n"
-            f"2. Find 'QR Network Scanner' (or Terminal if running via CLI) in the list.\n"
-            "3. Enable the toggle.\n"
-            "4. IMPORTANT: You must restart the app/terminal for changes to take effect."
-        )
-
-        tk.Label(
-            pad,
-            text=msg,
-            bg="white",
-            justify=tk.LEFT,
-            wraplength=450,
-            font=("Arial", 11),
-        ).pack(pady=10)
-
-        # Deep Links
-        def open_settings(url):
-            webbrowser.open(url)
-
-        btn_frame = tk.Frame(pad, bg="white")
-        btn_frame.pack(pady=20)
-
-        if focus == "Camera":
-            tk.Button(
-                btn_frame,
-                text="Open Camera Settings ↗",
-                command=lambda: open_settings(
-                    "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera"
-                ),
-            ).pack(side=tk.LEFT, padx=5)
-
-        # Always show Location/WiFi option too as it's common
-        tk.Button(
-            btn_frame,
-            text="Open Wi-Fi/Location Settings ↗",
-            command=lambda: open_settings(
-                "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices"
-            ),
-        ).pack(side=tk.LEFT, padx=5)
-
-        tk.Button(pad, text="Close", command=perm_window.destroy).pack(side=tk.BOTTOM)
-
-    def log(self, message: str):
-        # Redact sensitive info
-        if hasattr(self, "_redactor"):
-            message = self._redactor._redact(message)
-
-        try:
-            print(f"[GUI LOG] {message}")  # Console debug
-        except Exception:
-            pass
-
-        if self.debug and self.log_file:
-            try:
-                import datetime
-
-                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                with open(self.log_file, "a") as f:
-                    f.write(f"[{timestamp}] {message}\n")
-            except Exception:
-                pass
-
-        def _log():
-            if not self.root:
-                return
-            try:
-                self.log_area.config(state="normal")
-                self.log_area.insert(tk.END, message + "\n")
-                self.log_area.see(tk.END)
-                self.log_area.config(state="disabled")
-            except Exception:
-                pass
-
-        self.root.after(0, _log)
-
-    def scan_from_screen(self):
-        """Captures screen and scans for QR code"""
-        # Stop camera scanning if active to prevent conflict/confusion
-        if self.is_scanning:
-            self.toggle_scan()
-
-        # Temporarily stop camera feed to save resources/prevent interference while grabbing screen?
-        # For now, we can leave the feed running but just pause detection logic which is already handled since is_scanning is False.
-        # Actually, let's just log what we are doing.
-        self.log("Capturing screen...")
-
-        # Run in thread to not freeze UI during grab/process?
-        # Screen grab is usually fast, but detection might take a split second.
-        # For responsiveness, main thread is usually okay for single shot, but threading is safer.
-        # However, Tkinter needs UI updates on main thread. Let's do simple blocking for now as it's a button click.
-
-        try:
-            decoded_text = self.scanner.scan_screen()
-
-            if decoded_text:
-                self.log("QR Code found on screen!")
-                self.process_qr_data(decoded_text, NetworkManager())
-            else:
-                self.log("No Wi-Fi QR code found on any screen.")
-                messagebox.showinfo(
-                    "Scan from Screen",
-                    "No Wi-Fi QR code detected on any connected screen.\n\nMake sure the QR code is clearly visible.",
-                )
-
-        except Exception as e:
-            self.log(f"Screen scan failed: {e}")
-            messagebox.showerror("Error", f"Could not scan screen: {e}")
-
-    def toggle_scan(self):
-        if self.is_scanning:
-            # Stop scanning
-            self.is_scanning = False
-            self.scan_btn.config(text="📷 Scan Camera", style="Green.TButton")
-            self.log("Scanning stopped.")
-
-            # Stop camera to save resources
-            self.camera_active = False
+    def stop_camera(self):
+        self.camera_active = False
+        self.is_scanning = False  # Disable QR detection
+        if self.scanner:
             self.scanner.stop_camera()
 
-            # Reset Label
-            self.camera_label.config(
-                image="", text="Camera is Off\nClick 'Scan Camera' to start"
-            )
-        else:
-            # Start scanning
-            if not self.camera_active:
-                self.start_camera_safe()
-                # self.camera_active = True # Moved to start_camera_safe
+        self.status_label.configure(
+            image=None, text="Camera is Off\nClick 'Scan Camera' to start"
+        )
+        # CTkLabel doesn't support compound image+text easily in same way?
+        # Actually it does, but clearing image requires specific handling.
+        # Check components impl.
 
-            self.scan_start_time = time.time()
-            self.is_scanning = True
-            self.scan_btn.config(text="🛑 Stop Scanning", style="Red.TButton")
-            self.log("Scanning started...")
+        # Reset butons
+        self.control_panel.set_scanning_state(False)
+        self.control_panel.screen_scan_btn.configure(state="normal")
+
+    def toggle_scan(self):
+        if self.camera_active:
+            self.stop_camera()
+            self.log("Camera stopped by user.")
+        else:
+            self.start_camera_safe()
 
     def update_camera_feed(self):
-        if self.camera_active:
-            # If paused (lost focus) or camera stopped, skip processing but keep loop alive
-            if self.is_paused:
-                self.root.after(200, self.update_camera_feed)  # Slow poll
-                return
+        if not self.camera_active:
+            return
 
-            ret, frame = self.scanner.get_frame()
-            if ret:
-                # Resize the frame to fit the UI (Dynamic resizing)
-                # Get current label size
-                label_w = self.camera_label.winfo_width()
-                label_h = self.camera_label.winfo_height()
+        if self.is_paused:
+            self.after(500, self.update_camera_feed)
+            return
 
-                # If label size is too small (e.g. minimized or initializing), use default 640x480 ratio target
-                if label_w < 10 or label_h < 10:
-                    label_w = 640
-                    label_h = 480
+        ret, frame = self.scanner.get_frame()
+        if not ret or frame is None:
+            self.after(10, self.update_camera_feed)
+            return
 
-                # Calculate aspect ratio
-                h, w, _ = frame.shape
-                aspect_ratio = w / h
+        # Display Frame on Label
+        try:
+            # Get dimensions
+            w = self.status_label.winfo_width()
+            h = self.status_label.winfo_height()
+            if w < 10 or h < 10:
+                w, h = 640, 480  # Default if not yet rendered
 
-                # Determine new dimensions to fit within label while maintaining aspect ratio
-                if label_w / label_h > aspect_ratio:
-                    # Label is wider than frame -> height is limiting factor
-                    new_height = label_h
-                    new_width = int(new_height * aspect_ratio)
-                else:
-                    # Label is taller than frame -> width is limiting factor
-                    new_width = label_w
-                    new_height = int(new_width / aspect_ratio)
+            # Convert CV2 to PIL
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(rgb_frame)
 
-                # Resize
-                resize_frame = cv2.resize(frame, (new_width, new_height))
+            # Aspect Ratio Resize
+            img_w, img_h = img.size
+            ratio = min(w / img_w, h / img_h)
+            new_w = int(img_w * ratio)
+            new_h = int(img_h * ratio)
 
-                # Convert frame for Tkinter
-                rgb_frame = cv2.cvtColor(resize_frame, cv2.COLOR_BGR2RGB)
-                img = Image.fromarray(rgb_frame)
-                imgtk = ImageTk.PhotoImage(image=img)
-                self.camera_label.imgtk = imgtk
-                self.camera_label.configure(
-                    image=imgtk, text=""
-                )  # interactively clear text
+            # CTkImage is preferred for scaling support
+            ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=(new_w, new_h))
 
-                # Perform Detection if scanning (on main thread)
-                if self.is_scanning:
-                    # Timeout Check
-                    try:
-                        elapsed = time.time() - self.scan_start_time
-                        current_timeout = self.timeout_var.get()
-                        if elapsed > current_timeout:
-                            self.toggle_scan()  # Assuming this is the equivalent of stop_scan() for now
-                            self.log(f"Scan timed out after {current_timeout}s.")
-                            # The original code had a messagebox.askretrycancel here.
-                            # The new snippet implies a different error handling.
-                            # For now, I'll keep the original messagebox logic but adapt the message.
-                            if messagebox.askretrycancel(
-                                "Scan Timed Out",
-                                f"No QR code detected within {current_timeout} seconds.\n\nRetry?",
-                            ):
-                                self.toggle_scan()
-                            return
-                        remaining = int(current_timeout - elapsed)
-                        # Overlay
-                        cv2.putText(
-                            resize_frame,
-                            f"Scanning: {remaining}s",
-                            (10, 30),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.7,
-                            (0, 0, 255),
-                            2,
-                        )
-                        # Re-update label with overlay
-                        img_ov = Image.fromarray(
-                            cv2.cvtColor(resize_frame, cv2.COLOR_BGR2RGB)
-                        )
-                        imgtk_ov = ImageTk.PhotoImage(image=img_ov)
-                        self.camera_label.imgtk = imgtk_ov
-                        self.camera_label.configure(image=imgtk_ov)
-                    except Exception:
-                        pass
+            self.status_label.configure(image=ctk_img, text="")
+            self.status_label._image = (
+                ctk_img  # Keep ref (internal ctk prop, or just keep variable)
+            )
+            self.current_image = ctk_img  # Keep explicit ref
+        except Exception:
+            pass
 
-                    # Detect on the ORIGINAL frame for better resolution/accuracy
-                    # This might cause slight UI stutter on slower machines but ensures detection works
-                    decoded_text, points = self.scanner.detect_qr(frame)
+        # Scan for QR if detection is enabled
+        if self.is_scanning:
+            # Timeout Check
+            try:
+                elapsed = time.time() - self.scan_start_time
+                current_timeout = self.control_panel.timeout_var.get()
+                if elapsed > current_timeout:
+                    self.stop_camera()
+                    self.log(f"Scan timed out after {current_timeout}s.")
+                    # Use standard messagebox or CTk one? Standard is fine for alerts.
+                    if messagebox.askretrycancel(
+                        "Scan Timed Out",
+                        f"No QR code detected within {current_timeout} seconds.\n\nRetry?",
+                    ):
+                        self.toggle_scan()  # Restart scan
+                    return
+                remaining = int(current_timeout - elapsed)
 
-                    if decoded_text:
-                        self.log("QR Code found! Parsing...")
-                        self.is_scanning = False
-                        self.scan_btn.config(
-                            text="📷 Scan Camera", style="Green.TButton"
-                        )
+                # Overlay - we can't easily draw on CTkImage, assume CV2 drawing is sufficient on the frame source
+                # Re-do drawing on frame for overlay
+                display_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                cv2.putText(
+                    display_frame,
+                    f"Scanning: {remaining}s",
+                    (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 0, 255),
+                    2,
+                )
+                img_ov = Image.fromarray(display_frame)
+                ctk_img_ov = ctk.CTkImage(
+                    light_image=img_ov, dark_image=img_ov, size=(new_w, new_h)
+                )
+                self.status_label.configure(image=ctk_img_ov)
+                self.current_image = ctk_img_ov
 
-                        # Stop camera to save resources
-                        self.camera_active = False
-                        self.scanner.stop_camera()
+            except Exception:
+                pass
 
-                        # Process immediately as we are on main thread
-                        self.process_qr_data(decoded_text, NetworkManager())
+            decoded_text, _ = self.scanner.detect_qr(frame)
+            if decoded_text:
+                self.log("QR Detected!")
+                self.is_scanning = False
+                self.stop_camera()
+                self.process_qr_data(decoded_text)
 
-            # Continue updating feed
-            self.root.after(10, self.update_camera_feed)
+        self.after(10, self.update_camera_feed)
 
-    def process_qr_data(self, qr_data, net_mgr):
+    def scan_from_screen(self):
+        self.stop_camera()  # Ensure camera is off
+        self.log("Scanning screen...")
+        try:
+            decoded_text = self.scanner.scan_screen()
+            if decoded_text:
+                self.log("QR Code found on screen!")
+                self.process_qr_data(decoded_text)
+            else:
+                self.log("No QR code found on screen.")
+                messagebox.showinfo(
+                    "Scan Screen",
+                    "No QR code could be detected on your screen.\nMake sure the QR code is clearly visible.",
+                )
+        except Exception as e:
+            self.log(f"Screen scan error: {e}")
+
+    def process_qr_data(self, qr_data):
         try:
             wifi_info = WiFiQRParser.parse(qr_data)
             ssid = wifi_info["ssid"]
             password = wifi_info.get("password", "")
             security = wifi_info.get("type", "WPA")
+            hidden = wifi_info.get("hidden", False)
         except ValueError as e:
             self.log(f"Error parsing QR: {e}")
             return
 
-        self.log(f"Network: {ssid} ({security})")
+        hidden_msg = " (Hidden)" if hidden else ""
+        self.log(f"Process QR detected: {ssid} ({security})")
 
-        # Confirm before connect
-        if self.confirm_connect.get():
-            # Show a custom dialog or standard yes/no
-            # We want to show SSID and Security. Password hidden by default in log,
-            # here we can show "Password: *****"
-            msg = f"Network Found:\nSSID: {ssid}\nSecurity: {security}\n\nDo you want to proceed?"
-            if not messagebox.askyesno("Confirm Connection", msg):
-                self.log("User cancelled connection.")
-                return
+        self.status_label.configure(
+            text=f"Found: {ssid}{hidden_msg} ({security})",
+            text_color="blue",  # CTk text_color
+        )
 
-        self.log("Adding network to system settings...")
-        success, output = net_mgr.add_network(ssid, password, security)
+        # Update confirmation dialog text
+        self.confirm_dialog_text = (
+            f"Network: {ssid}\nType: {security}{hidden_msg}\n\nDo you want to connect?"
+        )
+
+        self.pending_ssid = ssid
+        self.pending_password = password
+        self.pending_security = security
+        self.pending_hidden = hidden
+
+        self.stop_camera()
+        self.log("Showing security confirmation sheet...")
+        self.show_security_sheet(ssid, password, security, hidden)
+
+    def show_security_sheet(self, ssid, password, security, hidden):
+        def on_connect():
+            self.connect_to_network(ssid, password, security, hidden, add_only=False)
+
+        def on_add_only():
+            self.connect_to_network(ssid, password, security, hidden, add_only=True)
+
+        def on_cancel():
+            self.log("Connection cancelled by user.")
+            self.toggle_scan()
+
+        SecurityConfirmationSheet(
+            self,  # Parent is self (CTk)
+            ssid,
+            security,
+            hidden,
+            on_connect,
+            on_add_only,
+            on_cancel,
+            {},  # Colors no longer needed, CTk handles it
+        )
+
+    def connect_to_network(
+        self,
+        ssid,
+        password,
+        security_type="WPA",
+        hidden: bool = False,
+        add_only: bool = False,
+    ):
+        """Adds and activates the network."""
+        self.status_label.configure(
+            text=f"Adding network {ssid}...", text_color="text_color"
+        )  # reset color
+        self.update()
+
+        # Add to preferred list
+        success, output = self.network_mgr.add_network(
+            ssid, password, security_type, hidden=hidden
+        )
         if success:
             self.log("Successfully added network.")
         else:
             self.log(f"Failed to add network: {output}")
-            # If add failed, usually connect will fail too, but maybe it exists?
-            # We continue if Add Only is NOT checked, otherwise we stop?
 
-        if self.add_only.get():
+        if add_only:
             self.log("Add Only mode enabled. Skipping connection.")
             messagebox.showinfo(
                 "Network Added", f"Profile for '{ssid}' updated.\nAuto-connect skipped."
@@ -1041,37 +546,60 @@ class QRNetworkApp:
             return
 
         self.log(f"Connecting to {ssid}...")
-        current = net_mgr.get_current_network()
+        current = self.network_mgr.get_current_network()
         if current == ssid:
             self.log(f"Already connected to {ssid}.")
         else:
-            success, output = net_mgr.activate_network(ssid, password)
+            success, output = self.network_mgr.activate_network(ssid, password)
             if success:
                 self.log(f"SUCCESS: Connected to {ssid}!")
-                self.root.after(
+                self.after(
                     0, lambda: messagebox.showinfo("Success", f"Connected to {ssid}")
                 )
             else:
                 self.log(f"Failed to connect: {output}")
-                self.root.after(
-                    0, lambda: messagebox.showerror("Connection Failed", output)
-                )
+                self.after(0, lambda: messagebox.showerror("Connection Failed", output))
+
+    def install_alias_to_zshrc(self):
+        try:
+            home = os.path.expanduser("~")
+            zshrc_path = os.path.join(home, ".zshrc")
+
+            # Check if alias already exists
+            if os.path.exists(zshrc_path):
+                with open(zshrc_path, "r") as f:
+                    content = f.read()
+                    if "alias qr-network=" in content:
+                        messagebox.showinfo(
+                            "Info", "Alias 'qr-network' already exists in .zshrc"
+                        )
+                        return
+
+            with open(zshrc_path, "a") as f:
+                f.write(f"\n# QR Network Scanner Alias\n{self.alias_cmd}\n")
+
+            messagebox.showinfo(
+                "Success",
+                f"Alias added to {zshrc_path}.\nPlease restart your terminal or run 'source ~/.zshrc'.",
+            )
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not write to .zshrc: {e}")
 
     def on_closing(self):
         self.camera_active = False
         if self.scanner:
             self.scanner.stop_camera()
-        self.root.destroy()
+        self.destroy()
 
 
 def main(debug=False):
     import traceback
 
     try:
-        root = tk.Tk()
-        app = QRNetworkApp(root, debug=debug)
-        root.protocol("WM_DELETE_WINDOW", app.on_closing)
-        root.mainloop()
+        app = QRNetworkApp(debug=debug)
+        app.protocol("WM_DELETE_WINDOW", app.on_closing)
+        app.mainloop()
     except Exception:
         # Emergency Crash Logging
         error_msg = traceback.format_exc()
@@ -1080,6 +608,9 @@ def main(debug=False):
             f.write(error_msg)
         try:
             # Try to show error via TK if possible, though unlikely if crashed
+            # We can use simple tk call here just to show message if possible
+            root = tk.Tk()
+            root.withdraw()
             messagebox.showerror(
                 "Critical Error",
                 f"App crashed. Log saved to {crash_file}\n\n{error_msg}",

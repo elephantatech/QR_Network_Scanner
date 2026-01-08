@@ -50,7 +50,7 @@ class TestCLI(unittest.TestCase):
 
         # Verify calls
         mock_scanner.scan_one.assert_called_once()
-        mock_net.add_network.assert_called_with("MyNet", "secret", "WPA")
+        mock_net.add_network.assert_called_with("MyNet", "secret", "WPA", hidden=False)
         mock_net.activate_network.assert_called_with("MyNet", "secret")
 
     @patch("qr_network.cli.QRCodeScanner")

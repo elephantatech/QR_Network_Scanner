@@ -120,9 +120,11 @@ def scan(
             ssid = wifi_info["ssid"]
             password = wifi_info.get("password", "")
             security = wifi_info.get("type", "WPA")
+            hidden = wifi_info.get("hidden", False)
 
+            hidden_str = " (Hidden)" if hidden else ""
             console.print(
-                f"[bold]Found Network:[/bold] [green]{ssid}[/green] ({security})"
+                f"[bold]Found Network:[/bold] [green]{ssid}[/green] ({security}){hidden_str}"
             )
 
         except ValueError as e:
@@ -133,7 +135,9 @@ def scan(
         if verbose:
             console.print(f"[dim]Adding network '{ssid}' to preferred list...[/dim]")
 
-        success, output = network_mgr.add_network(ssid, password, security)
+        success, output = network_mgr.add_network(
+            ssid, password, security, hidden=hidden
+        )
         if success:
             console.print(f"[green]✓[/green] Added network '{ssid}' to settings.")
         else:

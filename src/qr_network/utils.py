@@ -8,7 +8,7 @@ class RedactedLogger:
         # Regex to match "P:password;" pattern in Wi-Fi strings
         self.wifi_password_pattern = re.compile(r"(P:)([^;]+)(;)")
 
-    def _redact(self, message: str) -> str:
+    def redact(self, message: str) -> str:
         """Redacts sensitive information from the message."""
         if not isinstance(message, str):
             return message
@@ -17,19 +17,19 @@ class RedactedLogger:
         return self.wifi_password_pattern.sub(r"\1***\3", message)
 
     def info(self, msg, *args, **kwargs):
-        self.logger.info(self._redact(msg), *args, **kwargs)
+        self.logger.info(self.redact(msg), *args, **kwargs)
 
     def debug(self, msg, *args, **kwargs):
-        self.logger.debug(self._redact(msg), *args, **kwargs)
+        self.logger.debug(self.redact(msg), *args, **kwargs)
 
     def warning(self, msg, *args, **kwargs):
-        self.logger.warning(self._redact(msg), *args, **kwargs)
+        self.logger.warning(self.redact(msg), *args, **kwargs)
 
     def error(self, msg, *args, **kwargs):
-        self.logger.error(self._redact(msg), *args, **kwargs)
+        self.logger.error(self.redact(msg), *args, **kwargs)
 
     def critical(self, msg, *args, **kwargs):
-        self.logger.critical(self._redact(msg), *args, **kwargs)
+        self.logger.critical(self.redact(msg), *args, **kwargs)
 
 
 def get_camera_names() -> list[str]:

@@ -28,7 +28,13 @@ class NetworkManager:
                 return match.group(1).strip()
         return None
 
-    def add_network(self, ssid: str, password: str, security_type: str = "WPA2"):
+    def add_network(
+        self,
+        ssid: str,
+        password: str,
+        security_type: str = "WPA2",
+        hidden: bool = False,
+    ):
         """
         Adds the network to the preferred list.
         """
