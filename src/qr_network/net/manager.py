@@ -37,6 +37,10 @@ class NetworkManager:
     ):
         """
         Adds the network to the preferred list.
+
+        Note: The 'hidden' parameter is currently unused because 'networksetup'
+        on macOS does not require a specific flag for hidden networks when
+        adding them to the preferred list. The OS handles probing automatically.
         """
         ns_security = "WPA2"  # Default
         if security_type.upper() == "WEP":

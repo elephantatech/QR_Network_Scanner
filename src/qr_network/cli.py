@@ -22,6 +22,39 @@ app = typer.Typer()
 console = Console()
 
 
+def version_callback(value: bool):
+    """
+    Callback to print the package version.
+    """
+    if value:
+        import importlib.metadata
+
+        try:
+            version = importlib.metadata.version("qr-network")
+        except importlib.metadata.PackageNotFoundError:
+            version = "unknown"
+        console.print(f"QR Network Scanner [bold cyan]{version}[/bold cyan]")
+        console.print("Copyright 2026 Elephanta Technologies and Design Inc")
+        console.print("Licensed under the Apache License, Version 2.0")
+        raise typer.Exit()
+
+
+@app.callback()
+def main(
+    version: bool = typer.Option(
+        None,
+        "--version",
+        callback=version_callback,
+        is_eager=True,
+        help="Show the application version and exit.",
+    ),
+):
+    """
+    QR Network Scanner CLI - Scan and Connect to WiFi via QR Codes.
+    """
+    pass
+
+
 @app.command()
 def gui(
     debug: bool = typer.Option(False, "--debug", help="Enable debug logging to file"),

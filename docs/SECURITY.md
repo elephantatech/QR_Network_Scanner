@@ -22,7 +22,7 @@ Instead, it leverages the native macOS `networksetup` utility. When a network is
 | Threat | Description | Mitigation |
 | :--- | :--- | :--- |
 | **Malicious QR Codes** | A QR code could contain a fake SSID/Password or attempt to exploit input parsing. | • **User Confirmation:** The "Confirm before Connect" feature allows users to inspect the SSID and Encryption type before any system action is taken.<br>• **Input Validation:** The parser strictly enforces standard Wi-Fi QR code formats (`WIFI:S:...;P:...;`). |
-| **Log Leakage** | Debug logs could accidentally expose passwords. | • **Redacted Logging:** All logs passed through the app's logger are filtered. Regex patterns replace password fields (`P:secret;`) with redacted placeholders (`P:***;`). |
+| **Log Leakage** | Debug logs could accidentally expose passwords. | • **Redacted Logging:** All logs are filtered via `RedactedLogger`. It uses regex for standard patterns and **dynamically** adds any processed passwords to its sensitive terms list for masking. |
 | **Untrusted Input** | Scanning a code from an untrusted source. | • **"Add Only" Mode:** Users can choose to add the network profile without automatically connecting, preventing immediate network association. |
 
 ## Reporting Vulnerabilities

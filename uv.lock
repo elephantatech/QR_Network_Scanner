@@ -762,7 +762,7 @@ wheels = [
 
 [[package]]
 name = "qr-network"
-version = "0.1.0b19"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "customtkinter" },

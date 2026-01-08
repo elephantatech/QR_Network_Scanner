@@ -70,9 +70,21 @@
 
     <div style="text-align: center; margin-bottom: 20px;">
         <img src="icon.png" alt="QR Network Scanner Logo" width="96" height="96">
+        <div style="margin-top: 20px;">
+            <img src="gui_main.png" alt="GUI Screenshot"
+                style="width: 100%; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+        </div>
     </div>
 
     <h1>QR Network Scanner Help</h1>
+    <div class="note">
+        <strong>📥 Quick Installation:</strong>
+        <ol>
+            <li>Open the <code>QRNetworkScanner.dmg</code> file.</li>
+            <li>Drag the <strong>QRNetworkScanner</strong> icon onto the <strong>Applications</strong> shortcut.</li>
+            <li>Right-click the app in your Applications folder and select <strong>Open</strong> to start.</li>
+        </ol>
+    </div>
     <p>Welcome to the QR Network Scanner documentation. This guide will help you use the application effectively and
         troubleshoot common issues.</p>
 
@@ -97,12 +109,33 @@
         <li><strong>File:</strong> Drag & Drop or click to select an image/PDF file.</li>
     </ul>
 
+    <div style="text-align: center; margin: 20px 0;">
+        <img src="gui_screen.png" alt="Screen Scanning Tab"
+            style="width: 80%; border-radius: 8px; border: 1px solid #ddd;">
+        <p><small>Scanning a QR code from your screen</small></p>
+    </div>
+
+    <div style="text-align: center; margin: 20px 0;">
+        <img src="gui_file.png" alt="File Scanning Tab" style="width: 80%; border-radius: 8px; border: 1px solid #ddd;">
+        <p><small>Scanning a QR code from a file</small></p>
+    </div>
+
     <div class="step">3. Scan</div>
     <p>Follow the instructions for the selected tab. The app will automatically detect it.</p>
 
     <div class="step">4. Connect</div>
     <p>Unless "Add Only" is selected, the app will automatically switch your macOS WiFi connection to the new network.
-    </p>
+    <div style="text-align: center; margin: 20px 0;">
+        <img src="gui_confirm.png" alt="Security Confirmation"
+            style="width: 60%; border-radius: 8px; border: 1px solid #ddd;">
+        <p><small>Security confirmation dialog</small></p>
+    </div>
+
+    <div style="text-align: center; margin: 20px 0;">
+        <img src="gui_success.png" alt="Success Message"
+            style="width: 80%; border-radius: 8px; border: 1px solid #ddd;">
+        <p><small>Connection successful!</small></p>
+    </div>
 
     <h2>CLI Mode (Terminal)</h2>
     <p>For advanced users. Run the CLI tool embedded in the app:</p>
@@ -160,8 +193,16 @@
         <li>Ensure the QR code is a valid WiFi QR code (starts with `WIFI:`).</li>
     </ul>
 
+    <h2>🧹 Maintenance & Cleanup</h2>
+    <p>To remove application data:</p>
+    <ul>
+        <li><strong>Logs:</strong> Manually delete <code>~/qr_crash.log</code> and <code>~/qr_network_debug.log</code>.
+        </li>
+        <li><strong>Settings:</strong> WiFi passwords are managed in the <strong>macOS Keychain</strong>.</li>
+    </ul>
+
     <div class="footer">
-        <p>Version 0.1.0-beta.17 | &copy; 2026 Elephanta Technologies</p>
+        <p>Version 1.0.0 | &copy; 2026 Elephanta Technologies</p>
     </div>
 
 </body>

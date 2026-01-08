@@ -7,14 +7,27 @@ class RedactedLogger:
         self.logger = logger
         # Regex to match "P:password;" pattern in Wi-Fi strings
         self.wifi_password_pattern = re.compile(r"(P:)([^;]+)(;)")
+        self.sensitive_terms = set()
+
+    def add_sensitive_term(self, term: str):
+        """Registers a sensitive string to be redacted from future logs."""
+        if term and len(term) > 3:  # Avoid redacting short common words
+            self.sensitive_terms.add(term)
 
     def redact(self, message: str) -> str:
         """Redacts sensitive information from the message."""
         if not isinstance(message, str):
             return message
 
-        # Redact Wi-Fi password in QR string
-        return self.wifi_password_pattern.sub(r"\1***\3", message)
+        # 1. Redact Wi-Fi password in QR string pattern
+        message = self.wifi_password_pattern.sub(r"\1***\3", message)
+
+        # 2. Redact specific known sensitive terms
+        for term in self.sensitive_terms:
+            if term in message:
+                message = message.replace(term, "***")
+
+        return message
 
     def info(self, msg, *args, **kwargs):
         self.logger.info(self.redact(msg), *args, **kwargs)

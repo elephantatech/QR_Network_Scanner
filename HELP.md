@@ -1,5 +1,17 @@
 # QR Network Scanner - User Guide & Troubleshooting
 
+## 📥 Installation
+
+1. **Download:** Get the latest `QRNetworkScanner.dmg` from the official repository.
+2. **Mount:** Double-click the `.dmg` file to open it.
+3. **Drag & Drop:** Drag the **QR Network Scanner** app icon into the **Applications** shortcut folder provided in the window.
+4. **First Run:**
+    * Right-click the app in your Applications folder.
+    * Select **Open**.
+    * Click **Open** again on the security prompt (this is only required once).
+
+---
+
 ## 📱 How to Use (GUI App)
 
 1. **Prepare:** Have a WiFi QR code ready (e.g., from an Android phone's WiFi sharing screen).
@@ -8,10 +20,17 @@
     * **Camera:** Point your webcam at a code.
     * **Screen:** Scan a code visible on your monitor.
     * **File:** Drag & drop or click to select an image/PDF file.
-4. **Connect:** The app will automatically:
+
+![Main Interface](screenshots/gui_main.png)
+*(Camera Tab)*
+
+1. **Connect:** The app will automatically:
     * Detect the network credentials.
     * Add the network to your macOS System Settings.
     * Attempt to connect immediately.
+
+![Successful Connection](screenshots/gui_success.png)
+*(Successful connection message)*
 
 ---
 
@@ -48,6 +67,9 @@ To run the app simply by typing `qr-network`, add an alias to your shell configu
 1. Open the **Help & FAQ** tab.
 2. Click **💻 CLI Setup**.
 3. Click **⚡ Install to ~/.zshrc** or **📋 Copy Alias**.
+
+![Help Tab](screenshots/gui_help.png)
+*(CLI Setup via Help Tab)*
 
 **Option C: Manual Configuration**
 
@@ -119,6 +141,15 @@ To view them via Terminal:
 ```bash
 cat ~/qr_network_debug.log
 ```
+
+---
+
+## 🧹 Maintenance & Cleanup
+
+If you wish to remove all data created by the app:
+
+1. **Logs:** Delete `~/qr_crash.log` and `~/qr_network_debug.log`.
+2. **Settings:** The app does not store persistent settings outside of the standard macOS Keychain for WiFi passwords (which you can manage via **System Settings > WiFi**).
 
 ---
 

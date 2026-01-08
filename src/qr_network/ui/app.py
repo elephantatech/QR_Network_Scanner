@@ -521,21 +521,6 @@ A: The app adds the network to macOS Settings. Click the WiFi icon in your menu 
         except Exception as e:
             self.log(f"File scan error: {e}")
             messagebox.showerror("Error", f"Failed to process file:\n{e}", parent=self)
-        self.stop_camera()  # Ensure camera is off
-        self.log("Scanning screen...")
-        try:
-            decoded_text = self.scanner.scan_screen()
-            if decoded_text:
-                self.log("QR Code found on screen!")
-                self.process_qr_data(decoded_text)
-            else:
-                self.log("No QR code found on screen.")
-                messagebox.showinfo(
-                    "Scan Screen",
-                    "No QR code could be detected on your screen.\nMake sure the QR code is clearly visible.",
-                )
-        except Exception as e:
-            self.log(f"Screen scan error: {e}")
 
     def process_qr_data(self, qr_data):
         try:
@@ -565,6 +550,10 @@ A: The app adds the network to macOS Settings. Click the WiFi icon in your menu 
         self.pending_password = password
         self.pending_security = security
         self.pending_hidden = hidden
+
+        # SECURITY: Register password for redaction
+        if password:
+            self._redactor.add_sensitive_term(password)
 
         self.stop_camera()
         self.log("Showing security confirmation sheet...")

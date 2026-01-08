@@ -5,6 +5,15 @@ All notable changes to the **QR Network Scanner** project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-01-08
+
+### Released
+
+- **First Stable Release:** Exiting Beta. The application is now considered stable for production use.
+- **Security:** Enhanced credential redaction in logs to dynamically protect sensitive data found during runtime.
+- **Hidden Network Support:** Confirmed support for hidden networks via native macOS probing.
+- **Documentation:** Updated README with verified feature set and simplified installation instructions.
+
 ## [0.1.0-beta.19] - 2026-01-08
 
 ### Added

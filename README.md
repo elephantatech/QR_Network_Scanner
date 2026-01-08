@@ -6,12 +6,12 @@
 
 [![CI/CD](https://github.com/elephantatech/QR_Network_Scanner/actions/workflows/build.yml/badge.svg)](https://github.com/elephantatech/QR_Network_Scanner/actions/workflows/build.yml)
 
-![Beta](https://img.shields.io/badge/status-Beta-orange) ![macOS](https://img.shields.io/badge/platform-macOS-lightgrey) ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
+![Release](https://img.shields.io/badge/status-Release-green) ![macOS](https://img.shields.io/badge/platform-macOS-lightgrey) ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
 
 A native macOS utility to scan WiFi QR codes (from Android/iOS sharing) and automatically connect your Mac to the network. No more typing long, complex passwords!
 
-![Demo](https://via.placeholder.com/800x450.png?text=Demo+GIF+Here)
-*(Add a demo GIF here showing the scan & connect flow)*
+![GUI Screenshot](screenshots/gui_main.png)
+*(The main interface of QR Network Scanner 1.0.0)*
 
 ## 🔒 Privacy & Security First
 
@@ -26,9 +26,10 @@ A native macOS utility to scan WiFi QR codes (from Android/iOS sharing) and auto
 ### Option 1: Download the App (Recommended)
 
 1. Go to the [Releases Page](../../releases).
-2. Download the latest `QRNetworkScanner_v0.1.0-beta.zip`.
-3. Unzip and drag `QRNetworkScanner.app` to your Applications folder.
-4. **Note:** On first launch, you may need to Right-Click > Open to bypass macOS security checks for unsigned apps.
+2. Download the latest `QRNetworkScanner.dmg`.
+3. **Install:** Open the DMG and drag the **QRNetworkScanner** icon onto the **Applications** shortcut folder.
+4. **Launch:** Open your Applications folder and launch the app.
+5. **Security:** On first launch, you may need to **Right-Click > Open** to bypass macOS gatekeeper checks for unsigned apps.
 
 ### Option 2: Install via Terminal (Developers)
 
@@ -99,6 +100,79 @@ uv run qr-network scan --verbose --timeout 30
 
 > **Note:** The CLI returns specific exit codes (0=Success, 10=Camera Error, 20=Network Error, 30=Timeout, 40=User Cancel) for easier scripting.
 
+### 💻 CLI Demo
+
+Here is the real output from the CLI tools:
+
+#### Version Check
+
+```bash
+qr-network --version
+```
+
+```text
+QR Network Scanner 1.0.0
+Copyright 2026 Elephanta Technologies and Design Inc
+Licensed under the Apache License, Version 2.0
+```
+
+#### List Available Cameras
+
+```bash
+qr-network list-cameras
+```
+
+```text
+╭───────────────────╮
+│ Available Cameras │
+╰───────────────────╯
+     Connected Cameras
+┏━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ ID ┃ Name               ┃
+┡━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│  0 │ MacBook Pro Camera │
+└────┴────────────────────┘
+```
+
+#### Help Menu
+
+```bash
+qr-network scan --help
+```
+
+```text
+ Usage: qr-network scan [OPTIONS]
+
+ Scans a WiFi QR code and connects to the network.
+
+╭─ Options ──────────────────────────────────────────────────╮
+│ --verbose  -v               Enable verbose logging         │
+│ --camera   -c      INTEGER  Camera ID to use [default: 0]  │
+│ --timeout  -t      FLOAT    Scan timeout in seconds        │
+│                             [default: 60.0]                │
+│ --screen   -s               Scan from screen instead of    │
+│                             camera                         │
+│ --file     -f      TEXT     Scan from image/PDF file       │
+│                             instead of camera              │
+│ --help                      Show this message and exit.    │
+╰────────────────────────────────────────────────────────────╯
+```
+
+#### Scan Timeout
+
+```bash
+qr-network scan --timeout 2
+```
+
+```text
+╭────────────────────╮
+│ QR Network Scanner │
+╰────────────────────╯
+Scan timed out or cancelled. Exiting.
+```
+
+**Note:** For a full list of commands, outcomes, and exit codes, see our [CLI Reference Guide](.gemini/antigravity/brain/6b01a426-9b29-4e1e-80be-122d3aa4ed99/cli_demo.md).
+
 ## ⚠️ Permissions & Troubleshooting
 
 First time running? macOS is strict! You will see prompts for:
@@ -112,10 +186,10 @@ First time running? macOS is strict! You will see prompts for:
 2. Ensure your terminal (e.g., iTerm2, Terminal) or `QRNetworkScanner` has permission.
 3. Restart the app.
 
-## 🚧 Known Limitations (Beta)
+## 🚧 Known Limitations
 
 * **Supported Encryption:** WPA, WPA2, WPA3, and WEP.
-* **Hidden Networks:** Currently requires the network to be broadcast.
+
 * **Enterprise:** WPA2-Enterprise QR codes are not yet supported.
 
 ## 🤝 Contributing
