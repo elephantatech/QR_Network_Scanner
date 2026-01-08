@@ -5,6 +5,21 @@ All notable changes to the **QR Network Scanner** project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-beta.19] - 2026-01-08
+
+### Added
+
+- **Scanner UI Tabs:** Introduced dedicated tabs for **Camera**, **Screen**, and **File** scanning.
+- **File Scanning:** Added drag-and-drop support for images and PDFs (first 3 pages).
+- **Screen Scanning:** Dedicated button to scan the entire screen for QR codes.
+- **Unit Tests:** Added tests for screen and file scanning functionality.
+- **Dev Tools:** Integrated `pre-commit` for code quality checks.
+
+### Fixed
+
+- **UI Freeze:** Fixed a `text_color` typo in `connect_to_network` that caused the application to crash/freeze when initiating a connection.
+- **Dialog Visibility:** Ensured `messagebox` alerts (Success/Failure) appear correctly over the main window by setting the `parent` attribute explicitly.
+
 ## [0.1.0-beta.18] - 2026-01-08
 
 ### UI Modernization

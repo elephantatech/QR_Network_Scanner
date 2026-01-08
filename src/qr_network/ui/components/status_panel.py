@@ -6,16 +6,6 @@ class StatusPanel:
         """
         :param parent: Parent frame (usually scanner_frame)
         """
-        # Status Label (The big text near camera)
-        self.status_label = ctk.CTkLabel(
-            parent,
-            text="Camera is Off\nClick 'Scan Camera' to start",
-            fg_color="black",
-            text_color="white",
-            corner_radius=6,  # Optional rounded corners if not filling logic
-        )
-        self.status_label.pack(pady=5, padx=10, expand=True, fill="both")
-
         # Log Area logic
         self.log_frame = ctk.CTkFrame(parent)  # Default frame styling
         # self.log_frame.configure(fg_color="transparent") # Or specific color
@@ -39,10 +29,6 @@ class StatusPanel:
         self.log_area.insert("end", message + "\n")
         self.log_area.see("end")
         self.log_area.configure(state="disabled")
-
-    def update_status(self, text, text_color="white", fg_color="black"):
-        """Update the status label."""
-        self.status_label.configure(text=text, text_color=text_color, fg_color=fg_color)
 
     def update_theme(self, colors):
         """No longer used, kept for compatibility if needed or pass."""

@@ -17,7 +17,7 @@ from ..utils import RedactedLogger
 # Components
 from .components.dialogs import DialogManager
 from .components.status_panel import StatusPanel
-from .components.control_panel import ControlPanel
+from .components.control_panel import ScannerInterface
 from .components.security_sheet import SecurityConfirmationSheet
 
 
@@ -102,16 +102,26 @@ class QRNetworkApp(ctk.CTk):
         self.tabview.add("  ❓ Help & FAQ  ")
         self.help_frame = self.tabview.tab("  ❓ Help & FAQ  ")
 
-        # Init Components inside frames (Pass self.scanner_frame as master)
-        # Note: Components need to be updated to accept CTkFrame as master
-        self.control_panel = ControlPanel(self.scanner_frame, self)
+        # Init Components inside frames
+        # Use ScannerInterface which contains nested tabs
+        self.control_panel = ScannerInterface(self.scanner_frame, self)
+        self.control_panel.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Access exposed vars
-        self.confirm_connect = self.control_panel.confirm_connect
-        self.add_only = self.control_panel.add_only
+        # Access exposed vars via properties or directly
+        # Note: ControlPanel/ScannerInterface no longer exposes text vars directly as properties in same way everywhere
+        # But we need to ensure app refs work or are removed if unused.
+        # These were used for the old bottom frame or separate logic.
+        # self.confirm_connect and self.add_only assume removed from UI based on previous steps content not showing them?
+        # Checking ControlPanel content... it had them initialized in vars but not shown in UI code?
+        # Current ScannerInterface doesn't have them. Assuming defaults or managed elsewhere if needed.
+        # If connect_to_network uses them, we might need to restore them or default them.
+        # Let's check usages of self.confirm_connect.
 
-        self.status_panel = StatusPanel(self.scanner_frame)
-        self.status_label = self.status_panel.status_label
+        self.status_panel = StatusPanel(self.scanner_frame)  # Put status below tabs
+
+        # Point the status label reference to the camera label inside the interface
+        # This allows existing code to update the camera preview
+        self.status_label = self.control_panel.camera_label
 
         self.setup_help_ui()
 
@@ -253,10 +263,11 @@ class QRNetworkApp(ctk.CTk):
         content = """QR Network Scanner Guide
 
 How to Use
-1. (Optional) Toggle 'Confirm before connecting' or 'Add only' in the toolbar.
-2. Click 'Scan Camera' or 'Scan Screen'.
-3. Point camera at code OR ensure QR is visible on screen.
-4. The app will auto-connect or save based on your settings.
+1. Select the desired tab: 'Camera', 'Screen', or 'File'.
+2. Camera: Point camera at code.
+3. Screen: Ensure QR is visible on screen.
+4. File: Drag & drop or select an image/PDF file.
+5. The app will auto-connect or save based on your settings.
 
 CLI Mode (Terminal)
 Run from Installed App:
@@ -267,6 +278,7 @@ Command Options:
 • --camera <ID>: Select a specific camera.
 • --timeout <SEC>: Stop scan after N seconds.
 • --screen: Scan from screen.
+• --file <PATH>: Scan from image/PDF file.
 • --verbose (-v): Enable debug logs.
 
 Run from Source (Dev):
@@ -387,9 +399,7 @@ A: The app adds the network to macOS Settings. Click the WiFi icon in your menu 
             ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=(new_w, new_h))
 
             self.status_label.configure(image=ctk_img, text="")
-            self.status_label._image = (
-                ctk_img  # Keep ref (internal ctk prop, or just keep variable)
-            )
+            self.status_label._image = ctk_img
             self.current_image = ctk_img  # Keep explicit ref
         except Exception:
             pass
@@ -428,8 +438,12 @@ A: The app adds the network to macOS Settings. Click the WiFi icon in your menu 
                 ctk_img_ov = ctk.CTkImage(
                     light_image=img_ov, dark_image=img_ov, size=(new_w, new_h)
                 )
+                # Update status label (which is camera_label) with overlay
                 self.status_label.configure(image=ctk_img_ov)
-                self.current_image = ctk_img_ov
+                self.status_label._image = ctk_img_ov
+
+            except Exception:
+                pass
 
             except Exception:
                 pass
@@ -444,6 +458,69 @@ A: The app adds the network to macOS Settings. Click the WiFi icon in your menu 
         self.after(10, self.update_camera_feed)
 
     def scan_from_screen(self):
+        self.stop_camera()  # Ensure camera is off
+        self.log("Scanning screen...")
+        try:
+            # Hide window briefly to capture screen
+            # self.iconify() # Optional, might be annoying if it flickers
+            # time.sleep(0.5)
+
+            decoded_text = self.scanner.scan_screen()
+            # self.deiconify()
+
+            if decoded_text:
+                self.log("QR Code found on screen!")
+                self.process_qr_data(decoded_text)
+            else:
+                self.log("No QR code found on screen.")
+                self.status_label.configure(
+                    text="No QR code found on screen.", text_color="red"
+                )
+                messagebox.showinfo(
+                    "Scan Screen",
+                    "No QR code could be detected on the screen.\nMake sure the QR code is clearly visible.",
+                    parent=self,
+                )
+        except Exception as e:
+            self.log(f"Screen scan error: {e}")
+            messagebox.showerror("Error", f"Failed to scan screen:\n{e}", parent=self)
+
+    def scan_from_file_action(self):
+        self.stop_camera()
+        file_path = ctk.filedialog.askopenfilename(
+            title="Select QR Code Image or PDF",
+            filetypes=[
+                ("All Supported", "*.png *.jpg *.jpeg *.bmp *.pdf"),
+                ("Images", "*.png *.jpg *.jpeg *.bmp"),
+                ("PDF Documents", "*.pdf"),
+            ],
+        )
+
+        if not file_path:
+            return
+
+        self.log(f"Scanning file: {os.path.basename(file_path)}...")
+        try:
+            # Show loading state?
+            self.status_label.configure(text="Processing file...", text_color="orange")
+            self.update()  # Force UI update
+
+            decoded_text = self.scanner.scan_file(file_path)
+
+            if decoded_text:
+                self.log("QR Code found in file!")
+                self.process_qr_data(decoded_text)
+            else:
+                self.log("No QR code found in file.")
+                self.status_label.configure(text="No QR code found.", text_color="red")
+                messagebox.showinfo(
+                    "Scan File",
+                    "No QR code could be detected in the selected file.\nEnsure the image is clear or try a different page if PDF.",
+                    parent=self,
+                )
+        except Exception as e:
+            self.log(f"File scan error: {e}")
+            messagebox.showerror("Error", f"Failed to process file:\n{e}", parent=self)
         self.stop_camera()  # Ensure camera is off
         self.log("Scanning screen...")
         try:
@@ -524,9 +601,10 @@ A: The app adds the network to macOS Settings. Click the WiFi icon in your menu 
         add_only: bool = False,
     ):
         """Adds and activates the network."""
+        # Reset colors (assuming StatusPanel uses black bg/white text default)
         self.status_label.configure(
-            text=f"Adding network {ssid}...", text_color="text_color"
-        )  # reset color
+            text=f"Adding network {ssid}...", text_color="white"
+        )
         self.update()
 
         # Add to preferred list
@@ -541,7 +619,9 @@ A: The app adds the network to macOS Settings. Click the WiFi icon in your menu 
         if add_only:
             self.log("Add Only mode enabled. Skipping connection.")
             messagebox.showinfo(
-                "Network Added", f"Profile for '{ssid}' updated.\nAuto-connect skipped."
+                "Network Added",
+                f"Profile for '{ssid}' updated.\nAuto-connect skipped.",
+                parent=self,
             )
             return
 
@@ -554,11 +634,19 @@ A: The app adds the network to macOS Settings. Click the WiFi icon in your menu 
             if success:
                 self.log(f"SUCCESS: Connected to {ssid}!")
                 self.after(
-                    0, lambda: messagebox.showinfo("Success", f"Connected to {ssid}")
+                    0,
+                    lambda: messagebox.showinfo(
+                        "Success", f"Connected to {ssid}", parent=self
+                    ),
                 )
             else:
                 self.log(f"Failed to connect: {output}")
-                self.after(0, lambda: messagebox.showerror("Connection Failed", output))
+                self.after(
+                    0,
+                    lambda: messagebox.showerror(
+                        "Connection Failed", output, parent=self
+                    ),
+                )
 
     def install_alias_to_zshrc(self):
         try:

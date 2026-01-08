@@ -74,6 +74,9 @@ def scan(
     screen: bool = typer.Option(
         False, "--screen", "-s", help="Scan from screen instead of camera"
     ),
+    file: str = typer.Option(
+        None, "--file", "-f", help="Scan from image/PDF file instead of camera"
+    ),
 ):
     """
     Scans a WiFi QR code and connects to the network.
@@ -100,6 +103,17 @@ def scan(
                         "[bold red]No QR code found on any screen.[/bold red]"
                     )
                     raise typer.Exit(code=ExitCode.CAMERA_ERROR)
+        elif file:
+            with console.status(
+                f"[bold green]Scanning file '{file}' for WiFi QR Code...[/bold green]",
+                spinner="dots",
+            ):
+                qr_data = scanner.scan_file(file)
+                if not qr_data:
+                    console.print(
+                        f"[bold red]No QR code found in file '{file}'.[/bold red]"
+                    )
+                    raise typer.Exit(code=ExitCode.GENERAL_ERROR)
         else:
             with console.status(
                 "[bold green]Scanning for WiFi QR Code... (Point camera at QR code)[/bold green]",

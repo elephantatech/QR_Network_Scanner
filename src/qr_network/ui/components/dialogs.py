@@ -244,7 +244,7 @@ class DialogManager:
             pad_frame, text="QR Network Scanner", font=("Arial", 20, "bold")
         ).pack(pady=(0, 5))
 
-        ctk.CTkLabel(pad_frame, text="v0.1.0-beta.18", text_color="gray").pack()
+        ctk.CTkLabel(pad_frame, text="v0.1.0-beta.19", text_color="gray").pack()
 
         copyright_text = (
             "Copyright © 2026\nElephanta Technologies and Design Inc\n\n"

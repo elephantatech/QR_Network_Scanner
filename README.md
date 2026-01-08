@@ -55,8 +55,11 @@ uv run qr-network gui
 
 1. **Optional:** Check "Confirm before connecting" to review network details first.
 2. **Optional:** Check "Add to settings only" if you don't want to connect immediately.
-3. Click **Start Scanning**.
-4. Hold a WiFi QR Code up to your camera.
+3. **Tabs:**
+   * **Camera:** Scan using your webcam.
+   * **Screen:** Scan a QR code visible on your screen (e.g., from a website).
+   * **File:** Drag & Drop or select an image/PDF containing a QR code.
+4. Click **Start Scanning** / **Scan Screen** / **Scan File**.
 5. The app will act based on your settings (Auto-connect or Save-only).
 
 ### CLI Mode (Terminal)
@@ -84,6 +87,7 @@ uv run qr-network scan
 * `--camera <id>`: Use a specific camera index (default: 0).
 * `list-cameras`: List all available cameras and their IDs.
 * `--screen`: Scan from the screen instead of the camera.
+* `--file <path>`: Scan from a local image or PDF file.
 * `-v, --verbose`: Show debug logs.
 
 **Example:**

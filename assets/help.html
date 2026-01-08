@@ -89,12 +89,16 @@
     </ul>
 
     <div class="step">2. Start Scanning</div>
-    <p>Click <strong>Start Scanning</strong> to use your webcam, or <strong>Scan Screen</strong> to detect a QR code
-        visible on your monitor.</p>
+    <p>Select a tab:</p>
+    <ul>
+        <li><strong>Camera:</strong> Click <strong>Start Scanning</strong> to use your webcam.</li>
+        <li><strong>Screen:</strong> Click <strong>Scan Screen</strong> to detect a QR code visible on your monitor.
+        </li>
+        <li><strong>File:</strong> Drag & Drop or click to select an image/PDF file.</li>
+    </ul>
 
     <div class="step">3. Scan</div>
-    <p>Hold the QR code up to the camera or ensure it is visible on your screen. The app will automatically detect it.
-    </p>
+    <p>Follow the instructions for the selected tab. The app will automatically detect it.</p>
 
     <div class="step">4. Connect</div>
     <p>Unless "Add Only" is selected, the app will automatically switch your macOS WiFi connection to the new network.
@@ -112,6 +116,7 @@
         <li><code>list-cameras</code>: List all connected cameras and their IDs.</li>
         <li><code>--timeout &lt;SEC&gt;</code>: Set scan timeout (Default: 60s).</li>
         <li><code>--screen</code>: Scan from screen (-s).</li>
+        <li><code>--file &lt;PATH&gt;</code>: Scan from image/PDF file (-f).</li>
         <li><code>--camera &lt;ID&gt;</code>: Select camera index.</li>
         <li><code>--verbose</code>: Enable detailed logs (-v).</li>
     </ul>

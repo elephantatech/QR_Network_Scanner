@@ -4,8 +4,11 @@
 
 1. **Prepare:** Have a WiFi QR code ready (e.g., from an Android phone's WiFi sharing screen).
 2. **Launch:** Open **QRNetworkScanner** from your Applications folder (or `dist/` folder).
-3. **Scan:** Go to the **Scanner** tab and click **Start Scanning**.
-4. **Connect:** Point your camera at the code. The app will automatically:
+3. **Scan:** Select the desired tab:
+    * **Camera:** Point your webcam at a code.
+    * **Screen:** Scan a code visible on your monitor.
+    * **File:** Drag & drop or click to select an image/PDF file.
+4. **Connect:** The app will automatically:
     * Detect the network credentials.
     * Add the network to your macOS System Settings.
     * Attempt to connect immediately.
@@ -74,6 +77,7 @@ uv run qr-network scan
 * **`list-cameras`**: List extracted camera names and IDs.
 * **`--timeout <SECONDS>`**: Set timeout (Default: 60s).
 * **`--screen`**: Scan from screen.
+* **`--file <PATH>`**: Scan from local image/PDF file.
 
 **Example:**
 

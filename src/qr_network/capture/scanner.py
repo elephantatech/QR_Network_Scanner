@@ -116,3 +116,63 @@ class QRCodeScanner:
         except Exception as e:
             print(f"Screen scan error: {e}")
             return None
+
+    def scan_file(self, file_path: str) -> Optional[str]:
+        """
+        Scans a file (Image or PDF) for a QR code.
+        """
+        import os
+        import numpy as np
+
+        if not os.path.exists(file_path):
+            return None
+
+        ext = os.path.splitext(file_path)[1].lower()
+
+        try:
+            # Handle PDF
+            if ext == ".pdf":
+                import fitz  # PyMuPDF
+
+                doc = fitz.open(file_path)
+                if doc.page_count < 1:
+                    return None
+
+                # Scan first 3 pages max to find a QR
+                for i in range(min(3, doc.page_count)):
+                    page = doc.load_page(i)
+                    pix = page.get_pixmap(dpi=300)  # High DPI for better detection
+
+                    # Convert to numpy array (RGB)
+                    img_np = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
+                        pix.h, pix.w, pix.n
+                    )
+
+                    # Convert RGB/RGBA to BGR for OpenCV
+                    if pix.n == 4:  # RGBA
+                        frame = cv2.cvtColor(img_np, cv2.COLOR_RGBA2BGR)
+                    elif pix.n == 3:  # RGB
+                        frame = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+                    else:
+                        continue  # Gray etc, might need specific handling or skip
+
+                    decoded_text, _ = self.detect_qr(frame)
+                    if decoded_text:
+                        return decoded_text
+                return None
+
+            # Handle Images
+            else:
+                # Use cv2.imread handling mostly standard formats
+                # For more robust format support (like HEIC on mac if supported by cv2 build, or others),
+                # we might fallback to PIL, but cv2 is usually fine for png/jpg.
+                frame = cv2.imread(file_path)
+                if frame is None:
+                    return None
+
+                decoded_text, _ = self.detect_qr(frame)
+                return decoded_text
+
+        except Exception as e:
+            print(f"File scan error: {e}")
+            return None
