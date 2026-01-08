@@ -5,6 +5,20 @@ All notable changes to the **QR Network Scanner** project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-beta.18] - 2026-01-08
+
+### UI Modernization
+
+- **CustomTkinter Migration:** Fully migrated the UI to `CustomTkinter` for a modern, native-feeling aesthetic on macOS.
+- **Dark Mode:** Implemented robust system-aware Dark/Light mode theme switching.
+- **Refactoring:** Replaced all legacy `tkinter`/`ttk` widgets (`Button`, `Frame`, `Notebook`, `Toplevel`) with their `ctk` equivalents (`CTkButton`, `CTkFrame`, `CTkTabview`, `CTkToplevel`).
+- **Confirmation Sheet:** Redesigned the "Network Detected" confirmation dialog as a modern, centered modal card.
+
+### Fixed
+
+- **Crash:** Resolved `AttributeError` on startup related to dialog initialization.
+- **Tests:** Updated smoke tests to correctly mock `CustomTkinter` dependencies.
+
 ## [0.1.0-beta.17] - 2026-01-04
 
 ### Architecture
