@@ -82,6 +82,5 @@ docs/_build/
 
 # Local Logs
 *.log
-entitlements.plist
 qr_startup_error.txt
 mockups/
