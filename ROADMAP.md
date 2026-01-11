@@ -2,6 +2,9 @@
 
 This document outlines the planned features and technical improvements for the 1.x release cycle of the QR Network Scanner.
 
+> [!NOTE]
+> This project is currently managed and developed by a single maintainer. Features listed here are slated for the development pipeline, but there is **no guarantee** of specific completion dates, sequence of implementation, or final delivery. The roadmap represents intended direction and priority, which may change based on individual capacity and technical requirements.
+
 ## 🚀 Priority Features
 
 ### 1. Wi-Fi QR Generator (Share Tab) [#2](https://github.com/elephantatech/QR_Network_Scanner/issues/2)
