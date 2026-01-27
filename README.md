@@ -10,7 +10,7 @@
 
 A native macOS utility to scan WiFi QR codes (from Android/iOS sharing) and automatically connect your Mac to the network. No more typing long, complex passwords!
 
-![GUI Screenshot](screenshots/gui_main.png)
+![GUI Screenshot](Screenshots/gui_main.png)
 *(The main interface of QR Network Scanner 1.0.0)*
 
 ## 🔒 Privacy & Security First
@@ -171,7 +171,7 @@ qr-network scan --timeout 2
 Scan timed out or cancelled. Exiting.
 ```
 
-**Note:** For a full list of commands, outcomes, and exit codes, see our [CLI Reference Guide](.gemini/antigravity/brain/6b01a426-9b29-4e1e-80be-122d3aa4ed99/cli_demo.md).
+**Note:** For a full list of commands, outcomes, and exit codes, see our [CLI Reference Guide](HELP.md#cli-options).
 
 ## ⚠️ Permissions & Troubleshooting
 

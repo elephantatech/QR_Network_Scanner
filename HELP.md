@@ -21,7 +21,7 @@
     * **Screen:** Scan a code visible on your monitor.
     * **File:** Drag & drop or click to select an image/PDF file.
 
-![Main Interface](screenshots/gui_main.png)
+![Main Interface](Screenshots/gui_main.png)
 *(Camera Tab)*
 
 1. **Connect:** The app will automatically:
@@ -29,7 +29,7 @@
     * Add the network to your macOS System Settings.
     * Attempt to connect immediately.
 
-![Successful Connection](screenshots/gui_success.png)
+![Successful Connection](Screenshots/gui_success.png)
 *(Successful connection message)*
 
 ---
@@ -68,7 +68,7 @@ To run the app simply by typing `qr-network`, add an alias to your shell configu
 2. Click **💻 CLI Setup**.
 3. Click **⚡ Install to ~/.zshrc** or **📋 Copy Alias**.
 
-![Help Tab](screenshots/gui_help.png)
+![Help Tab](Screenshots/gui_help.png)
 *(CLI Setup via Help Tab)*
 
 **Option C: Manual Configuration**
